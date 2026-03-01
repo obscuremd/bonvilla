@@ -42,7 +42,7 @@ const product = {
       name: "Onyx",
       hex: "#1a1a1a",
       images: [
-        "https://images.unsplash.com/photo-1695407893256-d57e95db4eda?w=900&auto=format&fit=crop&q=85",
+        "https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fHdvbWVuJTIwZml0bmVzc3xlbnwwfHwwfHx8MA%3D%3D",
         "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=900&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=900&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=900&auto=format&fit=crop&q=85",
@@ -55,7 +55,7 @@ const product = {
         "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=900&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=900&auto=format&fit=crop&q=85",
         "https://images.unsplash.com/photo-1594381898411-846e7d193883?w=900&auto=format&fit=crop&q=85",
-        "https://images.unsplash.com/photo-1695407893256-d57e95db4eda?w=900&auto=format&fit=crop&q=85",
+        "https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fHdvbWVuJTIwZml0bmVzc3xlbnwwfHwwfHx8MA%3D%3D",
       ],
     },
     {

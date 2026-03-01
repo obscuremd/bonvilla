@@ -26,7 +26,7 @@ const categories = [
     label: "Sets",
     count: "24",
     href: "/shop/sets",
-    img: "https://images.unsplash.com/photo-1695407893256-d57e95db4eda?w=400&auto=format&fit=crop&q=70",
+    img: "https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fHdvbWVuJTIwZml0bmVzc3xlbnwwfHwwfHx8MA%3D%3D",
   },
   {
     label: "Outerwear",

@@ -8,7 +8,7 @@ import { ArrowUpRight } from "lucide-react";
 const heroImages = [
   "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700&auto=format&fit=crop&q=80",
   "https://images.unsplash.com/photo-1624513764372-a4eb7b334c62?w=700&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1695407893256-d57e95db4eda?w=700&auto=format&fit=crop&q=80",
+  "https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fHdvbWVuJTIwZml0bmVzc3xlbnwwfHwwfHx8MA%3D%3D",
 ];
 
 const stagger = {
