@@ -1,0 +1,438 @@
+"use client";
+
+import { motion } from "framer-motion";
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight, Zap, Repeat2, Leaf, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+
+/* ─────────────────────────────────────────
+   1. CATEGORY STRIP
+───────────────────────────────────────── */
+const categories = [
+  {
+    label: "Leggings",
+    href: "/shop/leggings",
+    image:
+      "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&auto=format&fit=crop&q=70",
+    count: "48 styles",
+  },
+  {
+    label: "Sports Bras",
+    href: "/shop/sports-bras",
+    image:
+      "https://images.unsplash.com/photo-1594381898411-846e7d193883?w=400&auto=format&fit=crop&q=70",
+    count: "32 styles",
+  },
+  {
+    label: "Sets",
+    href: "/shop/sets",
+    image:
+      "https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fHdvbWVuJTIwZml0bmVzc3xlbnwwfHwwfHx8MA%3D%3D",
+    count: "24 styles",
+  },
+  {
+    label: "Outerwear",
+    href: "/shop/outerwear",
+    image:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&auto=format&fit=crop&q=70",
+    count: "18 styles",
+  },
+  {
+    label: "Tops",
+    href: "/shop/tops",
+    image:
+      "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?w=400&auto=format&fit=crop&q=70",
+    count: "41 styles",
+  },
+  {
+    label: "Shorts",
+    href: "/shop/shorts",
+    image:
+      "https://images.unsplash.com/photo-1607962837359-5e7e89f86776?w=400&auto=format&fit=crop&q=70",
+    count: "29 styles",
+  },
+];
+
+export function CategoryStrip() {
+  return (
+    <section className="w-full space-y-6">
+      <div className="flex items-end justify-between">
+        <div className="space-y-2">
+          <span className="section-label">Browse by Category</span>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-[#5b1619]">
+            Shop the Range
+          </h2>
+        </div>
+        <Link href="/shop">
+          <Button
+            variant="ghost"
+            className="hidden sm:flex font-body text-sm text-[#5b1619] hover:bg-[#5b1619]/5 rounded-full px-4"
+          >
+            All Categories →
+          </Button>
+        </Link>
+      </div>
+
+      <div className="divider-gold" />
+
+      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        {categories.map((cat, i) => (
+          <motion.div
+            key={cat.label}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+              duration: 0.5,
+              delay: i * 0.07,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <Link href={cat.href} className="block group">
+              <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#faf8f5] shadow-sm ring-1 ring-[#f4d6a4]/20">
+                <Image
+                  src={cat.image}
+                  alt={cat.label}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-108"
+                />
+                {/* Dark overlay that lightens on hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#5b1619]/70 via-[#5b1619]/10 to-transparent transition-opacity duration-300 group-hover:from-[#5b1619]/80" />
+                <div className="absolute bottom-0 left-0 right-0 p-2.5 md:p-3">
+                  <p className="font-body text-[11px] md:text-xs font-bold text-white leading-tight">
+                    {cat.label}
+                  </p>
+                  <p className="font-body text-[9px] md:text-[10px] text-[#f4d6a4]/80 mt-0.5">
+                    {cat.count}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────
+   2. BRAND PROMISE / PILLARS
+───────────────────────────────────────── */
+const pillars = [
+  {
+    icon: Zap,
+    title: "Performance Fabric",
+    body: "4-way stretch knit engineered to move with your body, not against it.",
+  },
+  {
+    icon: Repeat2,
+    title: "Shape Retention",
+    body: "Washes 200+ times without losing compression or colour intensity.",
+  },
+  {
+    icon: Leaf,
+    title: "Sustainably Made",
+    body: "Crafted from recycled fibres with a commitment to ethical production.",
+  },
+  {
+    icon: Star,
+    title: "Loved by Thousands",
+    body: "98% of customers say they'd buy again — and bring a friend.",
+  },
+];
+
+export function BrandPillars() {
+  return (
+    <section className="w-full">
+      {/* Full-bleed warm cream block */}
+      <div className="bg-[#faf8f5] rounded-3xl px-8 md:px-16 py-12 md:py-16 space-y-10">
+        <div className="text-center space-y-3 max-w-lg mx-auto">
+          <span className="section-label justify-center">Why Bonvilla</span>
+          <h2 className="font-display text-3xl md:text-5xl font-bold text-[#5b1619]">
+            Built different. <br className="hidden md:block" />
+            Worn better.
+          </h2>
+          <p className="font-body text-sm text-[#425362]/65 leading-relaxed">
+            Every stitch, fibre, and silhouette is decided with one question in
+            mind — does it make her feel unstoppable?
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {pillars.map(({ icon: Icon, title, body }, i) => (
+            <motion.div
+              key={title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{
+                duration: 0.55,
+                delay: i * 0.1,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="flex flex-col items-center text-center gap-3 p-5 bg-white rounded-2xl border border-[#f4d6a4]/30 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#5b1619]/8 flex items-center justify-center">
+                <Icon size={18} className="text-[#5b1619]" />
+              </div>
+              <p className="font-body text-sm font-bold text-[#5b1619]">
+                {title}
+              </p>
+              <p className="font-body text-[12px] text-[#425362]/60 leading-relaxed">
+                {body}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────
+   3. EDITORIAL FEATURE (split image + text)
+───────────────────────────────────────── */
+export function EditorialFeature() {
+  return (
+    <section className="w-full grid md:grid-cols-2 gap-6 md:gap-10 items-stretch">
+      {/* Left: big image */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="relative min-h-[420px] md:min-h-[540px] rounded-3xl overflow-hidden shadow-xl shadow-[#5b1619]/12 ring-1 ring-[#f4d6a4]/20"
+      >
+        <Image
+          src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=900&auto=format&fit=crop&q=80"
+          alt="The Summer Edit"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#5b1619]/60 via-transparent to-transparent" />
+        <div className="absolute bottom-8 left-8">
+          <span className="badge-gold mb-2 inline-block">Summer &apos;25</span>
+          <h3 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight">
+            The Sculpt <br />
+            Edit
+          </h3>
+        </div>
+      </motion.div>
+
+      {/* Right: two stacked smaller panels */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col gap-6"
+      >
+        {/* Top panel — text editorial */}
+        <div className="flex-1 bg-[#5b1619] rounded-3xl p-8 md:p-10 flex flex-col justify-between">
+          <div className="space-y-4">
+            <span className="font-body text-[10px] tracking-[0.4em] uppercase text-[#f4d6a4]/60">
+              The Collection
+            </span>
+            <h3 className="font-display text-2xl md:text-3xl font-bold text-white leading-tight">
+              Every rep. <br />
+              Every moment.
+            </h3>
+            <p className="font-body text-sm text-white/65 leading-relaxed max-w-xs">
+              Designed for the woman who trains hard, rests intentionally, and
+              shows up fully — whatever the day asks.
+            </p>
+          </div>
+          <Link href="/collections" className="inline-flex mt-6">
+            <button className="group inline-flex items-center gap-2 border border-[#f4d6a4]/40 text-[#f4d6a4] font-body font-semibold text-sm px-6 py-3 rounded-full hover:bg-[#f4d6a4] hover:text-[#5b1619] transition-all duration-300">
+              Explore Collection
+              <ArrowRight
+                size={14}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
+          </Link>
+        </div>
+
+        {/* Bottom panel — image */}
+        <div className="relative h-[200px] md:h-[220px] rounded-3xl overflow-hidden shadow-lg ring-1 ring-[#f4d6a4]/15">
+          <Image
+            src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=700&auto=format&fit=crop&q=80"
+            alt="New Arrivals"
+            fill
+            className="object-cover object-top hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#5b1619]/40 to-transparent" />
+          <div className="absolute left-6 top-1/2 -translate-y-1/2">
+            <p className="font-body text-[10px] font-semibold tracking-[0.3em] uppercase text-[#f4d6a4]">
+              New In
+            </p>
+            <p className="font-display text-xl font-bold text-white mt-1">
+              Fresh Drops
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────
+   4. REVIEWS STRIP
+───────────────────────────────────────── */
+const reviews = [
+  {
+    name: "Amara O.",
+    rating: 5,
+    text: "The Sculpt Set is genuinely the most comfortable gymwear I've ever owned. I wear it to the gym AND as a casual fit.",
+    item: "Sculpt Seamless Set",
+  },
+  {
+    name: "Jade K.",
+    rating: 5,
+    text: "Squat-proof, doesn't roll down, doesn't go see-through. I've found my forever legging.",
+    item: "Elevate Legging",
+  },
+  {
+    name: "Priya M.",
+    rating: 5,
+    text: "I've bought 4 colours now. The quality is ridiculous for the price point.",
+    item: "Define Sports Bra",
+  },
+  {
+    name: "Chloe R.",
+    rating: 4,
+    text: "Delivery was fast and the packaging was so beautiful. The hoodie fits perfectly cropped.",
+    item: "Flow Cropped Hoodie",
+  },
+  {
+    name: "Sade B.",
+    rating: 5,
+    text: "Finally a brand that gets it. Every piece feels premium. Won't be shopping anywhere else.",
+    item: "Power Ribbed Tank",
+  },
+];
+
+export function ReviewsStrip() {
+  return (
+    <section className="w-full space-y-6 overflow-hidden">
+      <div className="text-center space-y-2">
+        <span className="section-label justify-center">
+          Real Women, Real Results
+        </span>
+        <h2 className="font-display text-3xl md:text-4xl font-bold text-[#5b1619]">
+          What They&apos;re Saying
+        </h2>
+      </div>
+
+      {/* Marquee track */}
+      <div className="relative">
+        {/* Edge fades */}
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-background to-transparent z-10" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-background to-transparent z-10" />
+
+        <div className="flex gap-4 animate-marquee w-max">
+          {[...reviews, ...reviews].map((r, i) => (
+            <div
+              key={i}
+              className="w-[280px] flex-shrink-0 bg-[#faf8f5] border border-[#f4d6a4]/30 rounded-2xl p-5 space-y-3"
+            >
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, s) => (
+                  <Star
+                    key={s}
+                    size={11}
+                    className={
+                      s < r.rating
+                        ? "fill-[#f4d6a4] text-[#f4d6a4]"
+                        : "text-[#425362]/20"
+                    }
+                  />
+                ))}
+              </div>
+              <p className="font-body text-sm text-[#425362]/80 leading-relaxed">
+                &ldquo;{r.text}&rdquo;
+              </p>
+              <div>
+                <p className="font-body text-xs font-bold text-[#5b1619]">
+                  {r.name}
+                </p>
+                <p className="font-body text-[10px] text-[#425362]/45">
+                  {r.item}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────
+   5. NEWSLETTER CTA
+───────────────────────────────────────── */
+export function NewsletterCTA() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  function handleSubmit() {
+    if (!email) return;
+    setSubmitted(true);
+  }
+
+  return (
+    <section className="w-full">
+      <div className="relative overflow-hidden bg-[#5b1619] rounded-3xl px-8 md:px-20 py-14 md:py-20 text-center">
+        {/* Decorative glows */}
+        <div className="pointer-events-none absolute top-[-30%] left-[-10%] w-[400px] h-[400px] rounded-full bg-[#f4d6a4]/10 blur-[80px]" />
+        <div className="pointer-events-none absolute bottom-[-20%] right-[-5%] w-[350px] h-[350px] rounded-full bg-[#f4d6a4]/8 blur-[70px]" />
+
+        <div className="relative z-10 space-y-6 max-w-lg mx-auto">
+          <span className="font-body text-[10px] tracking-[0.4em] uppercase text-[#f4d6a4]/60 font-semibold">
+            Join the Movement
+          </span>
+          <h2 className="font-display text-4xl md:text-6xl font-bold text-white leading-tight">
+            10% off your <br />
+            first order.
+          </h2>
+          <p className="font-body text-sm text-white/60 leading-relaxed">
+            Sign up and be the first to hear about new drops, exclusive offers,
+            and training inspo straight to your inbox.
+          </p>
+
+          {submitted ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 bg-[#f4d6a4]/20 text-[#f4d6a4] font-body font-semibold text-sm px-6 py-3 rounded-full border border-[#f4d6a4]/30"
+            >
+              ✦ You&apos;re in — check your inbox!
+            </motion.div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="flex-1 bg-white/10 border border-white/20 rounded-full px-5 py-3 font-body text-sm text-white placeholder:text-white/35 outline-none focus:border-[#f4d6a4]/50 transition-colors"
+              />
+              <button
+                onClick={handleSubmit}
+                className="bg-[#f4d6a4] hover:bg-[#eac98f] text-[#5b1619] font-body font-bold text-sm px-7 py-3 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-[#f4d6a4]/25 hover:-translate-y-[1px] whitespace-nowrap"
+              >
+                Claim 10% Off
+              </button>
+            </div>
+          )}
+
+          <p className="font-body text-[10px] text-white/30">
+            No spam, ever. Unsubscribe anytime.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
