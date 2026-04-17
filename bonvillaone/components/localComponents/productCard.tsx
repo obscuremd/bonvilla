@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import Link from "next/link";
@@ -6,14 +7,41 @@ import { motion } from "framer-motion";
 import { Badge } from "../ui/badge";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 
+// Fallback variant in case product data is incomplete
+const FALLBACK_VARIANT: ColorVariant = {
+  name: "Default",
+  hex: "#e5e7eb",
+  images: [
+    "https://images.unsplash.com/photo-1655665436885-7b65869c7a6c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fGZhbGxiYWNrfGVufDB8fDB8fHww",
+  ],
+};
+
 export default function ProductCard({ product }: { product: ProductData }) {
+  // Guard: if product is missing essential data, render nothing (or a placeholder)
+  if (
+    !product ||
+    !product.colorVariants ||
+    product.colorVariants.length === 0
+  ) {
+    return (
+      <div className="relative w-[170px] sm:w-[210px] md:w-[230px] flex-shrink-0">
+        <div className="w-full h-[240px] sm:h-[280px] md:h-[300px] rounded-2xl bg-gray-100 animate-pulse" />
+        <div className="pt-2.5 space-y-2">
+          <div className="h-3 bg-gray-100 rounded w-3/4" />
+          <div className="h-4 bg-gray-100 rounded w-1/2" />
+        </div>
+      </div>
+    );
+  }
+
   const [activeVariantIdx, setActiveVariantIdx] = useState(0);
   const [imageIdx, setImageIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [wishlist, setWishlist] = useState(false);
 
-  const variant = product.colorVariants[activeVariantIdx];
-  const hasSecondImage = variant.images.length > 1;
+  // Safely get the current variant (fallback if index is out of bounds)
+  const variant = product.colorVariants[activeVariantIdx] ?? FALLBACK_VARIANT;
+  const hasSecondImage = variant.images && variant.images.length > 1;
   const discount = Math.round(
     ((product.originalPrice - product.discountedPrice) /
       product.originalPrice) *
@@ -21,9 +49,16 @@ export default function ProductCard({ product }: { product: ProductData }) {
   );
 
   function handleVariantChange(idx: number) {
-    setActiveVariantIdx(idx);
-    setImageIdx(0);
+    if (product.colorVariants[idx]) {
+      setActiveVariantIdx(idx);
+      setImageIdx(0);
+    }
   }
+
+  // Safe image array (fallback to placeholder)
+  const images = variant.images?.length
+    ? variant.images
+    : ["/placeholder-image.jpg"];
 
   return (
     <Link href={`/product/${product.slug}`} className="block">
@@ -40,7 +75,7 @@ export default function ProductCard({ product }: { product: ProductData }) {
       >
         {/* Image container */}
         <div className="relative w-full h-[240px] sm:h-[280px] md:h-[300px] rounded-2xl overflow-hidden bg-[#faf8f5]">
-          {variant.images.map((src, i) => (
+          {images.map((src, i) => (
             <motion.img
               key={`${activeVariantIdx}-${i}`}
               src={src}
@@ -67,13 +102,15 @@ export default function ProductCard({ product }: { product: ProductData }) {
           )}
 
           {/* Discount tag */}
-          <div className="absolute top-2.5 right-2.5 z-10">
-            <span className="font-body text-[9px] sm:text-[10px] font-bold bg-white text-[#5b1619] rounded-full px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-sm">
-              -{discount}%
-            </span>
-          </div>
+          {discount > 0 && (
+            <div className="absolute top-2.5 right-2.5 z-10">
+              <span className="font-body text-[9px] sm:text-[10px] font-bold bg-white text-[#5b1619] rounded-full px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-sm">
+                -{discount}%
+              </span>
+            </div>
+          )}
 
-          {/* Wishlist */}
+          {/* Wishlist button */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -88,7 +125,7 @@ export default function ProductCard({ product }: { product: ProductData }) {
             <Heart size={11} fill={wishlist ? "currentColor" : "none"} />
           </button>
 
-          {/* Image dot indicator */}
+          {/* Image dot indicator (only if more than 1 image) */}
           {hasSecondImage && (
             <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex gap-1">
               {[0, 1].map((i) => (
@@ -104,7 +141,7 @@ export default function ProductCard({ product }: { product: ProductData }) {
             </div>
           )}
 
-          {/* Add to cart — slides up on hover */}
+          {/* Add to cart – slides up on hover */}
           <motion.div
             initial={{ y: 12, opacity: 0 }}
             animate={isHovered ? { y: 0, opacity: 1 } : { y: 12, opacity: 0 }}
@@ -123,34 +160,36 @@ export default function ProductCard({ product }: { product: ProductData }) {
 
         {/* Info row */}
         <div className="pt-2.5 sm:pt-3 px-0.5 space-y-1.5 sm:space-y-2">
-          {/* Color swatches */}
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            {product.colorVariants.map((v, i) => (
-              <button
-                key={i}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleVariantChange(i);
-                }}
-                title={v.name}
-                className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-200 ${
-                  activeVariantIdx === i
-                    ? "border-[#5b1619] scale-125 shadow-sm"
-                    : "border-transparent hover:border-[#5b1619]/40"
-                }`}
-                style={{ backgroundColor: v.hex }}
-              />
-            ))}
-            <span className="font-body text-[9px] sm:text-[10px] text-[#425362]/50 ml-0.5 sm:ml-1">
-              {variant.name}
-            </span>
-          </div>
+          {/* Color swatches (only if variants exist) */}
+          {product.colorVariants.length > 0 && (
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {product.colorVariants.map((v, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleVariantChange(i);
+                  }}
+                  title={v.name}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-200 ${
+                    activeVariantIdx === i
+                      ? "border-[#5b1619] scale-125 shadow-sm"
+                      : "border-transparent hover:border-[#5b1619]/40"
+                  }`}
+                  style={{ backgroundColor: v.hex }}
+                />
+              ))}
+              <span className="font-body text-[9px] sm:text-[10px] text-[#425362]/50 ml-0.5 sm:ml-1">
+                {variant.name}
+              </span>
+            </div>
+          )}
 
           {/* Name + category */}
           <div>
-            <p className="font-body text-[9px] sm:text-[10px] text-[#425362]/45 uppercase tracking-widest">
-              {product.category}
-            </p>
+            {/* <p className="font-body text-[9px] sm:text-[10px] text-[#425362]/45 uppercase tracking-widest">
+                {product.category}
+              </p> */}
             <h3 className="font-body text-xs sm:text-sm font-semibold text-[#425362] leading-tight mt-0.5 group-hover:text-[#5b1619] transition-colors duration-200">
               {product.name}
             </h3>

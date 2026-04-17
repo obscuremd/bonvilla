@@ -146,7 +146,7 @@ function ProductShelf({
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {list.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p._id} product={p} />
           ))}
         </div>
       </div>

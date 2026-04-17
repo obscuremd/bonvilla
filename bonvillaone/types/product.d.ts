@@ -1,7 +1,11 @@
 interface ProductData {
-  id: string;
+  _id: string;
   slug: string;
   name: string;
+  description: string;
+  tagline: string;
+  features: string[];
+  sizes: string[];
   category: string;
   originalPrice: number;
   discountedPrice: number;
@@ -15,4 +19,5 @@ interface ColorVariant {
   name: string;
   hex: string;
   images: string[]; // 1 or 2 images
+  stock: number;
 }
