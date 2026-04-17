@@ -10,23 +10,25 @@ import { connectDB, SitePage } from "@/models/model";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await params;
   await connectDB();
-  const page = await SitePage.findOne({ slug: params.slug }).lean();
+  const page = await SitePage.findOne({ slug: slug }).lean();
   if (!page) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(page);
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await params;
   await connectDB();
   const body = await req.json();
   // body may contain: blocks, simpleBlocks, title, published
   const page = await SitePage.findOneAndUpdate(
-    { slug: params.slug },
+    { slug: slug },
     { $set: body },
     { new: true, upsert: true },
   );
@@ -35,12 +37,13 @@ export async function PUT(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await params;
   await connectDB();
   const body = await req.json();
   const page = await SitePage.findOneAndUpdate(
-    { slug: params.slug },
+    { slug: slug },
     { $set: body },
     { new: true },
   );
@@ -50,10 +53,11 @@ export async function PATCH(
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await params;
   await connectDB();
-  const page = await SitePage.findOne({ slug: params.slug });
+  const page = await SitePage.findOne({ slug: slug });
   if (!page) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (page.kind === "builtin")
     return NextResponse.json(

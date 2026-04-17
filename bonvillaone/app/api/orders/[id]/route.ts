@@ -7,10 +7,11 @@ import { connectDB, Order } from "@/models/model";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  const order = await Order.findById(params.id)
+  const order = await Order.findById(id)
     .populate("user", "name email")
     .populate("items.product", "name slug")
     .lean();
@@ -20,12 +21,13 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
   const { status, notes } = await req.json();
   const order = await Order.findByIdAndUpdate(
-    params.id,
+    id,
     { ...(status && { status }), ...(notes && { notes }) },
     { new: true },
   );

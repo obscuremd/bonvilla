@@ -7,10 +7,11 @@ import { connectDB, Product } from "@/models/model";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  const product = await Product.findById(params.id)
+  const product = await Product.findById(id)
     .populate("category", "name slug")
     .lean();
   if (!product)
@@ -20,11 +21,12 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
   const body = await req.json();
-  const product = await Product.findByIdAndUpdate(params.id, body, {
+  const product = await Product.findByIdAndUpdate(id, body, {
     new: true,
   });
   if (!product)
@@ -34,9 +36,10 @@ export async function PATCH(
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  await Product.findByIdAndUpdate(params.id, { isActive: false });
+  await Product.findByIdAndUpdate(id, { isActive: false });
   return NextResponse.json({ success: true });
 }

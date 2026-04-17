@@ -8,10 +8,11 @@ import { connectDB, NavLink } from "@/models/model";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  const link = await NavLink.findByIdAndUpdate(params.id, await req.json(), {
+  const link = await NavLink.findByIdAndUpdate(id, await req.json(), {
     new: true,
   });
   if (!link) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -20,9 +21,10 @@ export async function PATCH(
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  await NavLink.findByIdAndUpdate(params.id, { isActive: false });
+  await NavLink.findByIdAndUpdate(id, { isActive: false });
   return NextResponse.json({ success: true });
 }

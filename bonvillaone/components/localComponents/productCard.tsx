@@ -7,15 +7,6 @@ import { motion } from "framer-motion";
 import { Badge } from "../ui/badge";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 
-// Fallback variant in case product data is incomplete
-const FALLBACK_VARIANT: ColorVariant = {
-  name: "Default",
-  hex: "#e5e7eb",
-  images: [
-    "https://images.unsplash.com/photo-1655665436885-7b65869c7a6c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fGZhbGxiYWNrfGVufDB8fDB8fHww",
-  ],
-};
-
 export default function ProductCard({ product }: { product: ProductData }) {
   // Guard: if product is missing essential data, render nothing (or a placeholder)
   if (
@@ -40,7 +31,7 @@ export default function ProductCard({ product }: { product: ProductData }) {
   const [wishlist, setWishlist] = useState(false);
 
   // Safely get the current variant (fallback if index is out of bounds)
-  const variant = product.colorVariants[activeVariantIdx] ?? FALLBACK_VARIANT;
+  const variant = product.colorVariants[activeVariantIdx];
   const hasSecondImage = variant.images && variant.images.length > 1;
   const discount = Math.round(
     ((product.originalPrice - product.discountedPrice) /

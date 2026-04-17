@@ -6,30 +6,34 @@ import { connectDB, Category } from "@/models/model";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  const cat = await Category.findById(params.id).lean();
+  const cat = await Category.findById(id).lean();
   if (!cat) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(cat);
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
+
   await connectDB();
   const body = await req.json();
-  const cat = await Category.findByIdAndUpdate(params.id, body, { new: true });
+  const cat = await Category.findByIdAndUpdate(id, body, { new: true });
   if (!cat) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(cat);
 }
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   await connectDB();
-  await Category.findByIdAndUpdate(params.id, { isActive: false });
+  await Category.findByIdAndUpdate(id, { isActive: false });
   return NextResponse.json({ success: true });
 }
