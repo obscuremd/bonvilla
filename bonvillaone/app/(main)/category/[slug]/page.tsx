@@ -65,9 +65,9 @@ const HERO_FALLBACKS: Record<string, string> = {
 export default async function CategoryPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
   const [category, pageContent] = await Promise.all([
     getCategory(slug),
     getPageContent(slug),

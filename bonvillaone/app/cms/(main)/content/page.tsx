@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/static-components */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -17,17 +18,13 @@ import {
   Minus,
   Link as LinkIcon,
   Loader2,
-  Check,
-  Pencil,
-  X,
   Eye,
   EyeOff,
   ExternalLink,
   Save,
   Columns,
+  X,
 } from "lucide-react";
-
-/* ── shadcn ── */
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,13 +39,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -62,9 +52,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { uploadImages } from "@/lib/uploadImages";
 
-/* ═══════════════════════
-   TYPES
-═══════════════════════ */
+/* ── Types ── */
 type BlockType =
   | "hero"
   | "heading"
@@ -74,21 +62,18 @@ type BlockType =
   | "features"
   | "cta"
   | "divider";
-
 interface PageBlock {
   _id?: string;
   type: BlockType;
   order: number;
   value: Record<string, unknown>;
 }
-
 interface SimpleBlock {
   key: string;
   label: string;
   type: "text" | "richtext" | "image";
   value: string;
 }
-
 interface SitePage {
   _id?: string;
   slug: string;
@@ -98,7 +83,6 @@ interface SitePage {
   blocks: PageBlock[];
   published: boolean;
 }
-
 interface NavLink {
   _id: string;
   label: string;
@@ -107,9 +91,6 @@ interface NavLink {
   order: number;
 }
 
-/* ═══════════════════════
-   BLOCK METADATA
-═══════════════════════ */
 const BLOCK_META: Record<
   BlockType,
   { label: string; icon: React.FC<{ size?: number }> }
@@ -123,7 +104,6 @@ const BLOCK_META: Record<
   cta: { label: "CTA Button", icon: LinkIcon },
   divider: { label: "Divider", icon: Minus },
 };
-
 const DEFAULT_VALUES: Record<BlockType, Record<string, unknown>> = {
   hero: { heading: "", subtext: "", images: [], label: "" },
   heading: { text: "" },
@@ -141,9 +121,7 @@ const DEFAULT_VALUES: Record<BlockType, Record<string, unknown>> = {
   divider: {},
 };
 
-/* ═══════════════════════
-   BLOCK EDITOR FORMS
-═══════════════════════ */
+/* ── Block editor (same as before, condensed) ── */
 function BlockEditor({
   block,
   onChange,
@@ -156,7 +134,7 @@ function BlockEditor({
   const [uploading, setUploading] = useState(false);
   const v = block.value;
 
-  async function handleImageUpload(
+  async function handleImages(
     e: React.ChangeEvent<HTMLInputElement>,
     field = "images",
   ) {
@@ -165,26 +143,23 @@ function BlockEditor({
     setUploading(true);
     try {
       const urls = await onUpload(files);
-      const existing = (v[field] as string[]) ?? [];
-      onChange({ ...v, [field]: [...existing, ...urls] });
+      onChange({ ...v, [field]: [...((v[field] as string[]) ?? []), ...urls] });
     } finally {
       setUploading(false);
     }
   }
-
   function removeImage(field: string, idx: number) {
     const imgs = [...((v[field] as string[]) ?? [])];
     imgs.splice(idx, 1);
     onChange({ ...v, [field]: imgs });
   }
-
-  const imagePreview = (field: string) => (
+  const imgPreview = (field: string) => (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         {((v[field] as string[]) ?? []).map((url, i) => (
           <div
             key={i}
-            className="relative w-16 h-16 rounded-lg overflow-hidden border border-border"
+            className="relative w-14 h-14 rounded-lg overflow-hidden border border-border"
           >
             <img src={url} alt="" className="w-full h-full object-cover" />
             <button
@@ -196,12 +171,12 @@ function BlockEditor({
           </div>
         ))}
       </div>
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="cursor-pointer flex items-center gap-2">
         <input
           type="file"
           multiple
           accept="image/*"
-          onChange={(e) => handleImageUpload(e, field)}
+          onChange={(e) => handleImages(e, field)}
           className="hidden"
         />
         <Button
@@ -248,7 +223,7 @@ function BlockEditor({
           />
         </div>
         <div>
-          <Label className="label-form">Label (optional eyebrow)</Label>
+          <Label className="label-form">Eyebrow label</Label>
           <Input
             className="input-field mt-1"
             value={(v.label as string) ?? ""}
@@ -257,17 +232,19 @@ function BlockEditor({
         </div>
         <div>
           <Label className="label-form">
-            Images (1 = static · 2+ = carousel)
+            Images{" "}
+            <span className="font-normal normal-case text-muted-foreground">
+              (1 = static · 2+ = carousel)
+            </span>
           </Label>
-          {imagePreview("images")}
+          {imgPreview("images")}
         </div>
       </div>
     );
-
   if (block.type === "heading")
     return (
       <div>
-        <Label className="label-form">Heading Text</Label>
+        <Label className="label-form">Heading</Label>
         <Input
           className="input-field mt-1"
           value={(v.text as string) ?? ""}
@@ -275,11 +252,10 @@ function BlockEditor({
         />
       </div>
     );
-
   if (block.type === "subheading")
     return (
       <div>
-        <Label className="label-form">Sub-label Text</Label>
+        <Label className="label-form">Sub-label</Label>
         <Input
           className="input-field mt-1"
           value={(v.text as string) ?? ""}
@@ -287,7 +263,6 @@ function BlockEditor({
         />
       </div>
     );
-
   if (block.type === "body")
     return (
       <div>
@@ -300,12 +275,11 @@ function BlockEditor({
         />
       </div>
     );
-
   if (block.type === "image_grid")
     return (
       <div className="space-y-3">
         <div>
-          <Label className="label-form">Section Title (optional)</Label>
+          <Label className="label-form">Title</Label>
           <Input
             className="input-field mt-1"
             value={(v.title as string) ?? ""}
@@ -313,7 +287,7 @@ function BlockEditor({
           />
         </div>
         <div>
-          <Label className="label-form">Caption (optional)</Label>
+          <Label className="label-form">Caption</Label>
           <Input
             className="input-field mt-1"
             value={(v.caption as string) ?? ""}
@@ -322,11 +296,10 @@ function BlockEditor({
         </div>
         <div>
           <Label className="label-form">Images</Label>
-          {imagePreview("images")}
+          {imgPreview("images")}
         </div>
       </div>
     );
-
   if (block.type === "features") {
     const items = (v.items as { title: string; sub: string }[]) ?? [
       { title: "", sub: "" },
@@ -368,7 +341,7 @@ function BlockEditor({
                   onClick={() =>
                     onChange({ ...v, items: items.filter((_, ii) => ii !== i) })
                   }
-                  className="mt-5 text-destructive hover:text-destructive/70"
+                  className="mt-5 text-destructive"
                 >
                   <X size={14} />
                 </button>
@@ -390,12 +363,11 @@ function BlockEditor({
       </div>
     );
   }
-
   if (block.type === "cta")
     return (
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="label-form">Button Label</Label>
+          <Label className="label-form">Label</Label>
           <Input
             className="input-field mt-1"
             value={(v.label as string) ?? ""}
@@ -403,7 +375,7 @@ function BlockEditor({
           />
         </div>
         <div>
-          <Label className="label-form">Link (href)</Label>
+          <Label className="label-form">href</Label>
           <Input
             className="input-field mt-1"
             value={(v.href as string) ?? ""}
@@ -412,32 +384,25 @@ function BlockEditor({
         </div>
       </div>
     );
-
-  if (block.type === "divider")
-    return (
-      <p className="font-body text-xs text-muted-foreground italic">
-        Visual divider — no settings needed.
-      </p>
-    );
-
-  return null;
+  return (
+    <p className="font-body text-xs text-muted-foreground italic">
+      Divider — no settings needed.
+    </p>
+  );
 }
 
-/* ═══════════════════════
-   SIMPLE BLOCK FORM (built-in pages)
-═══════════════════════ */
+/* ── Simple blocks (built-in) ── */
 function SimpleBlockForm({
   blocks,
   onChange,
   onImageUpload,
 }: {
   blocks: SimpleBlock[];
-  onChange: (updated: SimpleBlock[]) => void;
-  onImageUpload: (files: File[]) => Promise<string[]>;
+  onChange: (u: SimpleBlock[]) => void;
+  onImageUpload: (f: File[]) => Promise<string[]>;
 }) {
   const [uploading, setUploading] = useState<string | null>(null);
-
-  async function handleImage(
+  async function handleImg(
     key: string,
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -455,7 +420,6 @@ function SimpleBlockForm({
       setUploading(null);
     }
   }
-
   return (
     <div className="space-y-4">
       {blocks.map((b) => (
@@ -487,7 +451,7 @@ function SimpleBlockForm({
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleImage(b.key, e)}
+                  onChange={(e) => handleImg(b.key, e)}
                   className="hidden"
                 />
                 <Button
@@ -501,7 +465,7 @@ function SimpleBlockForm({
                   ) : (
                     <ImageIcon size={12} className="mr-1" />
                   )}
-                  {b.value ? "Replace Image" : "Upload Image"}
+                  {b.value ? "Replace" : "Upload"}
                 </Button>
                 {b.value && (
                   <Input
@@ -538,9 +502,7 @@ function SimpleBlockForm({
   );
 }
 
-/* ═══════════════════════
-   NAV LINK MANAGER
-═══════════════════════ */
+/* ── Nav link manager ── */
 function NavLinkManager({
   placement,
   label,
@@ -552,15 +514,14 @@ function NavLinkManager({
   const [newLabel, setNewLabel] = useState("");
   const [newHref, setNewHref] = useState("");
   const [saving, setSaving] = useState(false);
-
   async function load() {
     const r = await fetch(`/api/nav-links?placement=${placement}`);
-    setLinks(await r.json());
+    const d = await r.json();
+    setLinks(Array.isArray(d) ? d : []);
   }
   useEffect(() => {
     load();
   }, [placement]);
-
   async function add() {
     if (!newLabel || !newHref) return;
     setSaving(true);
@@ -572,6 +533,7 @@ function NavLinkManager({
         href: newHref,
         placement,
         order: links.length,
+        isActive: true,
       }),
     });
     setNewLabel("");
@@ -579,15 +541,13 @@ function NavLinkManager({
     await load();
     setSaving(false);
   }
-
   async function remove(id: string) {
     await fetch(`/api/nav-links/${id}`, { method: "DELETE" });
     await load();
   }
-
   return (
     <div className="space-y-4">
-      <p className="label-form">{label} Links</p>
+      <p className="label-form">{label}</p>
       <div className="space-y-2">
         {links.map((l) => (
           <div
@@ -598,20 +558,23 @@ function NavLinkManager({
               size={13}
               className="text-muted-foreground/40 cursor-grab"
             />
-            <span className="font-body text-sm text-foreground flex-1">
-              {l.label}
-            </span>
+            <span className="font-body text-sm flex-1">{l.label}</span>
             <span className="font-body text-xs text-muted-foreground">
               {l.href}
             </span>
             <button
               onClick={() => remove(l._id)}
-              className="text-muted-foreground/50 hover:text-destructive transition-colors"
+              className="text-muted-foreground/50 hover:text-destructive"
             >
               <Trash2 size={13} />
             </button>
           </div>
         ))}
+        {links.length === 0 && (
+          <p className="font-body text-xs text-muted-foreground italic">
+            No links yet.
+          </p>
+        )}
       </div>
       <div className="flex gap-2">
         <Input
@@ -628,7 +591,7 @@ function NavLinkManager({
         />
         <Button
           onClick={add}
-          disabled={saving}
+          disabled={saving || !newLabel || !newHref}
           size="sm"
           className="btn-primary shrink-0"
         >
@@ -643,25 +606,33 @@ function NavLinkManager({
   );
 }
 
-/* ═══════════════════════
-   PAGE EDITOR PANEL
-═══════════════════════ */
-function PageEditorPanel({ page }: { page: SitePage }) {
-  const [simpleBlocks, setSimpleBlocks] = useState<SimpleBlock[]>(
-    page.simpleBlocks ?? [],
-  );
-  const [blocks, setBlocks] = useState<PageBlock[]>(
-    [...(page.blocks ?? [])].sort((a, b) => a.order - b.order),
-  );
+/* ═══════════════════════════════════════
+   PAGE EDITOR — fetches fresh on mount,
+   has SAVE + PUBLISH as separate actions
+═══════════════════════════════════════ */
+function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
+  const [page, setPage] = useState<SitePage | null>(null);
+  const [simpleBlocks, setSimpleBlocks] = useState<SimpleBlock[]>([]);
+  const [blocks, setBlocks] = useState<PageBlock[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
 
-  // Sync when page changes
   useEffect(() => {
-    setSimpleBlocks(page.simpleBlocks ?? []);
-    setBlocks([...(page.blocks ?? [])].sort((a, b) => a.order - b.order));
-  }, [page._id]);
+    setLoading(true);
+    fetch(`/api/site-pages/${pageSlug}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: SitePage | null) => {
+        if (!data) return;
+        setPage(data);
+        setSimpleBlocks(data.simpleBlocks ?? []);
+        setBlocks([...(data.blocks ?? [])].sort((a, b) => a.order - b.order));
+        setCollapsed(new Set());
+      })
+      .finally(() => setLoading(false));
+  }, [pageSlug]);
 
   async function handleUpload(files: File[]): Promise<string[]> {
     const r = await uploadImages(files);
@@ -669,32 +640,26 @@ function PageEditorPanel({ page }: { page: SitePage }) {
   }
 
   function addBlock(type: BlockType) {
-    const newBlock: PageBlock = {
-      type,
-      order: blocks.length,
-      value: { ...DEFAULT_VALUES[type] },
-    };
-    setBlocks((prev) => [...prev, newBlock]);
+    setBlocks((prev) => [
+      ...prev,
+      { type, order: prev.length, value: { ...DEFAULT_VALUES[type] } },
+    ]);
   }
-
   function updateBlock(idx: number, value: Record<string, unknown>) {
     setBlocks((prev) => prev.map((b, i) => (i === idx ? { ...b, value } : b)));
   }
-
   function moveBlock(idx: number, dir: -1 | 1) {
     const b = [...blocks];
-    const swap = idx + dir;
-    if (swap < 0 || swap >= b.length) return;
-    [b[idx], b[swap]] = [b[swap], b[idx]];
+    const s = idx + dir;
+    if (s < 0 || s >= b.length) return;
+    [b[idx], b[s]] = [b[s], b[idx]];
     setBlocks(b.map((x, i) => ({ ...x, order: i })));
   }
-
   function removeBlock(idx: number) {
     setBlocks((prev) =>
       prev.filter((_, i) => i !== idx).map((x, i) => ({ ...x, order: i })),
     );
   }
-
   function toggleCollapse(idx: number) {
     setCollapsed((prev) => {
       const s = new Set(prev);
@@ -703,7 +668,9 @@ function PageEditorPanel({ page }: { page: SitePage }) {
     });
   }
 
+  /* Save without publishing */
   async function saveAll() {
+    if (!page) return;
     setSaving(true);
     await fetch(`/api/site-pages/${page.slug}`, {
       method: "PUT",
@@ -714,43 +681,65 @@ function PageEditorPanel({ page }: { page: SitePage }) {
       }),
     });
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setSavedAt(new Date().toLocaleTimeString());
   }
 
-  /* Header and Footer pages only use NavLink manager */
+  /* Toggle published state */
+  async function togglePublish() {
+    if (!page) return;
+    setPublishing(true);
+    const nextPublished = !page.published;
+    await fetch(`/api/site-pages/${page.slug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ published: nextPublished }),
+    });
+    setPage((p) => (p ? { ...p, published: nextPublished } : null));
+    setPublishing(false);
+  }
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={18} className="animate-spin text-[#5b1619]/40" />
+      </div>
+    );
+  if (!page)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="font-body text-sm text-muted-foreground">
+          Page not found.
+        </p>
+      </div>
+    );
+
+  /* Header/Footer: special views */
   if (page.slug === "header")
     return (
       <div className="space-y-8 p-6">
         <div>
-          <h3 className="font-display text-xl font-bold text-foreground">
-            Header
-          </h3>
+          <h3 className="font-display text-xl font-bold">Header Navigation</h3>
           <p className="font-body text-sm text-muted-foreground mt-1">
-            Manage the static navigation links shown in the header and mobile
-            menu. Categories are pulled automatically.
+            Manage static navigation links. Categories are pulled automatically.
           </p>
         </div>
         <Separator />
-        <NavLinkManager placement="header" label="Navigation" />
+        <NavLinkManager placement="header" label="Navigation Links" />
       </div>
     );
-
   if (page.slug === "footer")
     return (
-      <div className="space-y-8 p-6">
+      <div className="space-y-8 p-6 overflow-y-auto">
         <div>
-          <h3 className="font-display text-xl font-bold text-foreground">
-            Footer
-          </h3>
+          <h3 className="font-display text-xl font-bold">Footer</h3>
           <p className="font-body text-sm text-muted-foreground mt-1">
-            Manage footer link columns and the brand tagline.
+            Manage footer columns and brand tagline.
           </p>
         </div>
         <Separator />
-        {page.simpleBlocks.length > 0 && (
-          <div className="space-y-4">
-            <p className="label-form">Brand</p>
+        {simpleBlocks.length > 0 && (
+          <div className="surface rounded-xl p-4 space-y-4">
+            <p className="font-body text-sm font-semibold">Brand Tagline</p>
             <SimpleBlockForm
               blocks={simpleBlocks}
               onChange={setSimpleBlocks}
@@ -762,36 +751,39 @@ function PageEditorPanel({ page }: { page: SitePage }) {
         <NavLinkManager placement="footer_shop" label="Shop Column" />
         <NavLinkManager placement="footer_company" label="Company Column" />
         <NavLinkManager placement="footer_help" label="Help Column" />
-        <div className="pt-4">
-          <Button onClick={saveAll} disabled={saving} className="btn-primary">
-            {saving ? (
-              <Loader2 size={13} className="animate-spin mr-1" />
-            ) : (
-              <Save size={13} className="mr-1" />
-            )}
-            {saved ? "Saved ✓" : "Save Changes"}
-          </Button>
-        </div>
+        <Button onClick={saveAll} disabled={saving} className="btn-primary">
+          {saving ? (
+            <Loader2 size={13} className="animate-spin mr-1" />
+          ) : (
+            <Save size={13} className="mr-1" />
+          )}
+          {savedAt ? "Saved ✓" : "Save Changes"}
+        </Button>
       </div>
     );
 
   return (
-    <div className="space-y-0">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
-        <div>
-          <h3 className="font-display text-lg font-bold text-foreground">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* ── Sticky header with SAVE + PUBLISH ── */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-between flex-shrink-0">
+        <div className="min-w-0">
+          <h3 className="font-display text-base font-bold text-foreground truncate">
             {page.title}
           </h3>
-          <p className="font-body text-xs text-muted-foreground">
-            {page.slug === "home" ? "Built-in page" : `/${page.slug}`}
+          <p className="font-body text-[11px] text-muted-foreground">
+            {page.kind === "builtin" ? "Built-in" : `/p/${page.slug}`}
+            {savedAt && (
+              <span className="ml-2 text-green-600">· Saved {savedAt}</span>
+            )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Preview link (custom pages only) */}
           {page.kind === "custom" && (
             <Button variant="outline" size="sm" asChild>
               <a
-                href={`/${page.slug}`}
+                href={`/p/${page.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -800,29 +792,65 @@ function PageEditorPanel({ page }: { page: SitePage }) {
               </a>
             </Button>
           )}
+
+          {/* SAVE (draft) */}
           <Button
             onClick={saveAll}
             disabled={saving}
             size="sm"
-            className="btn-primary"
+            variant="outline"
+            className="btn-outline text-xs px-3 py-1.5 h-auto"
           >
             {saving ? (
               <Loader2 size={12} className="animate-spin mr-1" />
             ) : (
               <Save size={12} className="mr-1" />
             )}
-            {saved ? "Saved ✓" : "Save"}
+            Save Draft
+          </Button>
+
+          {/* PUBLISH / UNPUBLISH — prominent, clearly labelled */}
+          <Button
+            onClick={togglePublish}
+            disabled={publishing}
+            size="sm"
+            className={`text-xs px-3 py-1.5 h-auto font-semibold gap-1.5 ${
+              page.published
+                ? "btn-outline border-amber-400/50 text-amber-700 hover:bg-amber-50"
+                : "btn-primary"
+            }`}
+          >
+            {publishing ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : page.published ? (
+              <EyeOff size={12} />
+            ) : (
+              <Eye size={12} />
+            )}
+            {publishing ? "…" : page.published ? "Unpublish" : "Publish"}
           </Button>
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Simple blocks (built-in pages like Home) */}
+      {/* Published status banner */}
+      {page.kind === "custom" && (
+        <div
+          className={`px-6 py-2 text-xs font-body font-semibold flex items-center gap-2 ${page.published ? "bg-green-50 text-green-700 border-b border-green-100" : "bg-amber-50 text-amber-700 border-b border-amber-100"}`}
+        >
+          <div
+            className={`w-1.5 h-1.5 rounded-full ${page.published ? "bg-green-500" : "bg-amber-400"}`}
+          />
+          {page.published
+            ? `Live at /p/${page.slug}`
+            : "Draft — not visible to the public"}
+        </div>
+      )}
+
+      <div className="p-6 space-y-6 overflow-y-auto flex-1">
+        {/* Simple content (home fields etc.) */}
         {simpleBlocks.length > 0 && (
           <div className="surface rounded-2xl p-5 space-y-5">
-            <p className="font-body text-sm font-semibold text-foreground">
-              Page Content
-            </p>
+            <p className="font-body text-sm font-semibold">Page Content</p>
             <SimpleBlockForm
               blocks={simpleBlocks}
               onChange={setSimpleBlocks}
@@ -831,19 +859,34 @@ function PageEditorPanel({ page }: { page: SitePage }) {
           </div>
         )}
 
-        {/* Page builder blocks */}
+        {/* Rich blocks */}
         <div className="space-y-3">
-          <p className="font-body text-sm font-semibold text-foreground">
-            {page.kind === "custom" ? "Page Layout" : "Additional Sections"}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-body text-sm font-semibold">
+              {page.kind === "custom" ? "Page Sections" : "Additional Sections"}
+            </p>
+            <span className="font-body text-xs text-muted-foreground">
+              {blocks.length} block{blocks.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {blocks.length === 0 && (
+            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center">
+              <p className="font-body text-sm text-muted-foreground">
+                No sections yet — add one below.
+              </p>
+            </div>
+          )}
 
           {blocks.map((block, idx) => {
             const meta = BLOCK_META[block.type];
             const Icon = meta.icon;
             const isCollapsed = collapsed.has(idx);
             return (
-              <div key={idx} className="surface rounded-xl overflow-hidden">
-                {/* Block header */}
+              <div
+                key={`${block._id ?? idx}-${block.type}`}
+                className="surface rounded-xl overflow-hidden"
+              >
                 <div className="flex items-center gap-3 px-4 py-3 bg-muted/20 border-b border-border">
                   <GripVertical
                     size={14}
@@ -852,7 +895,7 @@ function PageEditorPanel({ page }: { page: SitePage }) {
                   <span className="text-[#5b1619] shrink-0">
                     <Icon size={14} />
                   </span>
-                  <span className="font-body text-sm font-medium text-foreground flex-1">
+                  <span className="font-body text-sm font-medium flex-1">
                     {meta.label}
                   </span>
                   <div className="flex items-center gap-1">
@@ -888,7 +931,6 @@ function PageEditorPanel({ page }: { page: SitePage }) {
                     </button>
                   </div>
                 </div>
-                {/* Block body */}
                 {!isCollapsed && (
                   <div className="p-4">
                     <BlockEditor
@@ -902,7 +944,6 @@ function PageEditorPanel({ page }: { page: SitePage }) {
             );
           })}
 
-          {/* Add block dropdown */}
           <div className="flex flex-wrap gap-2 pt-1">
             {(Object.keys(BLOCK_META) as BlockType[]).map((type) => {
               const Icon = BLOCK_META[type].icon;
@@ -927,23 +968,19 @@ function PageEditorPanel({ page }: { page: SitePage }) {
   );
 }
 
-/* ═══════════════════════
-   NEW PAGE DIALOG
-═══════════════════════ */
-function NewPageDialog({ onCreated }: { onCreated: (page: SitePage) => void }) {
+/* ── New page dialog ── */
+function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
   function deriveSlug(t: string) {
     return t
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
   }
-
   async function create() {
     if (!title.trim() || !slug.trim()) {
       setError("Title and slug are required.");
@@ -976,7 +1013,6 @@ function NewPageDialog({ onCreated }: { onCreated: (page: SitePage) => void }) {
     setSlug("");
     setSaving(false);
   }
-
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
@@ -991,8 +1027,7 @@ function NewPageDialog({ onCreated }: { onCreated: (page: SitePage) => void }) {
             Create New Page
           </AlertDialogTitle>
           <AlertDialogDescription className="font-body text-sm text-muted-foreground">
-            This page will be accessible at{" "}
-            <code className="text-[#5b1619]">yourdomain.com/p/[slug]</code>
+            Accessible at <code className="text-[#5b1619]">/p/[slug]</code>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-4 py-2">
@@ -1045,54 +1080,46 @@ function NewPageDialog({ onCreated }: { onCreated: (page: SitePage) => void }) {
   );
 }
 
-/* ═══════════════════════
-   MAIN COMPONENT
-═══════════════════════ */
+/* ═══════════════════════════════════════
+   MAIN EXPORT
+═══════════════════════════════════════ */
 export default function CMSContent() {
   const [pages, setPages] = useState<SitePage[]>([]);
-  const [activePage, setActivePage] = useState<SitePage | null>(null);
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
 
   async function loadPages() {
     const r = await fetch("/api/site-pages");
     const data: SitePage[] = await r.json();
-    setPages(data);
-    if (!activePage && data.length > 0) setActivePage(data[0]);
-    else if (activePage)
-      setActivePage(data.find((p) => p.slug === activePage.slug) ?? data[0]);
+    setPages(Array.isArray(data) ? data : []);
+    if (!activeSlug && data.length > 0) setActiveSlug(data[0].slug);
     setLoading(false);
   }
-
   useEffect(() => {
     loadPages();
   }, []);
 
-  async function togglePublish(page: SitePage) {
-    setToggling(page.slug);
-    await fetch(`/api/site-pages/${page.slug}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: !page.published }),
-    });
-    await loadPages();
-    setToggling(null);
+  /* Keep sidebar badges in sync after publish toggle */
+  function refreshPageInList(slug: string, published: boolean) {
+    setPages((prev) =>
+      prev.map((p) => (p.slug === slug ? { ...p, published } : p)),
+    );
   }
 
   async function deletePage(page: SitePage) {
     await fetch(`/api/site-pages/${page.slug}`, { method: "DELETE" });
-    setActivePage(null);
+    setActiveSlug(null);
     await loadPages();
   }
 
   const builtins = pages.filter((p) => p.kind === "builtin");
   const customs = pages.filter((p) => p.kind === "custom");
 
-  /* ── Mobile sheet trigger ── */
-  const sidebarContent = (
+  const SidebarInner = () => (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border">
-        <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-semibold mb-1">
+        <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-semibold">
           Built-in Pages
         </p>
       </div>
@@ -1101,8 +1128,8 @@ export default function CMSContent() {
           {builtins.map((page) => (
             <button
               key={page.slug}
-              onClick={() => setActivePage(page)}
-              className={`cms-nav-item w-full text-left ${activePage?.slug === page.slug ? "active" : ""}`}
+              onClick={() => setActiveSlug(page.slug)}
+              className={`cms-nav-item w-full text-left ${activeSlug === page.slug ? "active" : ""}`}
             >
               {page.slug === "home" && <Layout size={14} />}
               {page.slug === "header" && <Menu size={14} />}
@@ -1110,7 +1137,6 @@ export default function CMSContent() {
               <span className="flex-1">{page.title}</span>
             </button>
           ))}
-
           {customs.length > 0 && (
             <>
               <Separator className="my-3" />
@@ -1120,36 +1146,19 @@ export default function CMSContent() {
               {customs.map((page) => (
                 <div key={page.slug} className="group relative">
                   <button
-                    onClick={() => setActivePage(page)}
-                    className={`cms-nav-item w-full text-left pr-16 ${activePage?.slug === page.slug ? "active" : ""}`}
+                    onClick={() => setActiveSlug(page.slug)}
+                    className={`cms-nav-item w-full text-left pr-8 ${activeSlug === page.slug ? "active" : ""}`}
                   >
                     <Globe size={14} />
                     <span className="flex-1 truncate">{page.title}</span>
-                    {page.published ? (
-                      <span className="text-[9px] font-bold text-green-600 tracking-wide uppercase">
-                        Live
-                      </span>
-                    ) : (
-                      <span className="text-[9px] font-bold text-muted-foreground tracking-wide uppercase">
-                        Draft
-                      </span>
-                    )}
-                  </button>
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1">
-                    <button
-                      onClick={() => togglePublish(page)}
-                      disabled={toggling === page.slug}
-                      className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-[#5b1619]"
-                      title={page.published ? "Unpublish" : "Publish"}
+                    <Badge
+                      variant="outline"
+                      className={`text-[9px] font-bold tracking-wide h-4 px-1.5 ${page.published ? "border-green-300 text-green-700 bg-green-50" : "border-amber-300 text-amber-700 bg-amber-50"}`}
                     >
-                      {toggling === page.slug ? (
-                        <Loader2 size={11} className="animate-spin" />
-                      ) : page.published ? (
-                        <EyeOff size={11} />
-                      ) : (
-                        <Eye size={11} />
-                      )}
-                    </button>
+                      {page.published ? "Live" : "Draft"}
+                    </Badge>
+                  </button>
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <button className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive">
@@ -1161,7 +1170,7 @@ export default function CMSContent() {
                           <AlertDialogTitle className="font-display text-lg text-[#5b1619]">
                             Delete &quot;{page.title}&quot;?
                           </AlertDialogTitle>
-                          <AlertDialogDescription className="font-body text-sm text-muted-foreground">
+                          <AlertDialogDescription>
                             This cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
@@ -1189,7 +1198,7 @@ export default function CMSContent() {
         <NewPageDialog
           onCreated={(p) => {
             setPages((prev) => [...prev, p]);
-            setActivePage(p);
+            setActiveSlug(p.slug);
           }}
         />
       </div>
@@ -1205,12 +1214,9 @@ export default function CMSContent() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] -m-6 md:-m-8 overflow-hidden">
-      {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-56 flex-shrink-0 border-r border-border bg-muted/20">
-        {sidebarContent}
+        <SidebarInner />
       </aside>
-
-      {/* ── Mobile sidebar trigger ── */}
       <div className="md:hidden absolute top-2 left-2 z-30">
         <Sheet>
           <SheetTrigger asChild>
@@ -1222,15 +1228,13 @@ export default function CMSContent() {
             <SheetHeader className="p-4 border-b border-border">
               <SheetTitle className="font-body text-sm">Pages</SheetTitle>
             </SheetHeader>
-            {sidebarContent}
+            <SidebarInner />
           </SheetContent>
         </Sheet>
       </div>
-
-      {/* ── Editor area ── */}
-      <div className="flex-1 overflow-y-auto">
-        {activePage ? (
-          <PageEditorPanel key={activePage.slug} page={activePage} />
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {activeSlug ? (
+          <PageEditorPanel key={activeSlug} pageSlug={activeSlug} />
         ) : (
           <div className="flex items-center justify-center h-full">
             <p className="font-body text-sm text-muted-foreground">

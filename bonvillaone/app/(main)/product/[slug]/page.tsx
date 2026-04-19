@@ -17,8 +17,10 @@ import {
   Star,
 } from "lucide-react";
 import ProductShelf from "@/components/localComponents/productShelf";
+import { AuthDialog } from "@/components/localComponents/AuthDialog";
+import { addToCart } from "../../cart/page";
 
-/* ── Gallery ─────────────────────────────────── */
+/* ── Gallery ───────────────────────────────────── */
 function Gallery({ images }: { images: string[] }) {
   const [main, setMain] = useState(0);
   const [dir, setDir] = useState(1);
@@ -31,7 +33,7 @@ function Gallery({ images }: { images: string[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-[--color-cream] ring-1 ring-[--color-gold]/20">
+      <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-[#faf8f5] ring-1 ring-[rgba(244,214,164,0.2)]">
         <AnimatePresence mode="popLayout" custom={dir}>
           <motion.div
             key={main}
@@ -69,13 +71,13 @@ function Gallery({ images }: { images: string[] }) {
           <button
             key={label}
             onClick={fn}
-            className={`absolute ${pos} top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm border border-[--color-gold]/30 text-[--color-slate]/60 hover:text-[--color-crimson] hover:border-[--color-crimson]/30 transition-all flex items-center justify-center text-lg shadow-sm`}
+            className={`absolute ${pos} top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm border border-[rgba(244,214,164,0.4)] text-[rgba(66,83,98,0.6)] hover:text-[#5b1619] hover:border-[rgba(91,22,25,0.25)] transition-all flex items-center justify-center text-lg shadow-sm`}
           >
             {label}
           </button>
         ))}
 
-        <div className="absolute bottom-4 right-4 font-body text-[10px] text-[--color-slate]/40 tracking-widest">
+        <div className="absolute bottom-4 right-4 font-body text-[10px] text-[rgba(66,83,98,0.4)] tracking-widest">
           {String(main + 1).padStart(2, "0")} /{" "}
           {String(images.length).padStart(2, "0")}
         </div>
@@ -88,8 +90,8 @@ function Gallery({ images }: { images: string[] }) {
             onClick={() => go(i)}
             className={`relative flex-shrink-0 w-[68px] h-[88px] rounded-xl overflow-hidden border-2 transition-all duration-250 ${
               main === i
-                ? "border-[--color-crimson]/50 scale-[1.04] shadow-sm"
-                : "border-[--color-gold]/25 opacity-55 hover:opacity-90 hover:border-[--color-gold]/60"
+                ? "border-[rgba(91,22,25,0.5)] scale-[1.04] shadow-sm"
+                : "border-[rgba(244,214,164,0.3)] opacity-55 hover:opacity-90 hover:border-[rgba(244,214,164,0.6)]"
             }`}
           >
             {src && <Image src={src} alt="" fill className="object-cover" />}
@@ -100,7 +102,7 @@ function Gallery({ images }: { images: string[] }) {
   );
 }
 
-/* ── Accordion ──────────────────────────────── */
+/* ── Accordion ─────────────────────────────────── */
 function Accordion({
   title,
   children,
@@ -110,19 +112,19 @@ function Accordion({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[--color-gold]/25">
+    <div className="border-b border-[rgba(244,214,164,0.3)]">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-4 text-left"
       >
-        <span className="font-body text-sm font-medium text-[--color-slate]/80">
+        <span className="font-body text-sm font-medium text-[rgba(66,83,98,0.8)]">
           {title}
         </span>
         <motion.div
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.22 }}
         >
-          <ChevronDown size={14} className="text-[--color-crimson]/40" />
+          <ChevronDown size={14} className="text-[rgba(91,22,25,0.4)]" />
         </motion.div>
       </button>
       <AnimatePresence>
@@ -134,7 +136,7 @@ function Accordion({
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="pb-5 font-body text-sm text-[--color-slate]/55 leading-relaxed">
+            <div className="pb-5 font-body text-sm text-[rgba(66,83,98,0.6)] leading-relaxed">
               {children}
             </div>
           </motion.div>
@@ -144,7 +146,7 @@ function Accordion({
   );
 }
 
-/* ── Product Page ────────────────────────────── */
+/* ── Product Page ──────────────────────────────── */
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
 
@@ -156,17 +158,27 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1);
   const [loved, setLoved] = useState(false);
   const [added, setAdded] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setIsLoggedIn(!!d?.user))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!params?.slug) return;
-    // Find product by slug
     fetch(`/api/products?slug=${params.slug}&limit=1`)
       .then((r) => r.json())
       .then((d) => {
         const p = d.products?.[0] ?? null;
         setProduct(p);
         if (p) {
-          fetch(`/api/products?category=${p.category?._id}&limit=6`)
+          const catId =
+            typeof p.category === "object" ? p.category?._id : p.category;
+          fetch(`/api/products?category=${catId}&limit=6`)
             .then((r) => r.json())
             .then((d2) =>
               setRelated(
@@ -182,12 +194,12 @@ export default function ProductPage() {
   if (loading)
     return (
       <div className="grid lg:grid-cols-2 gap-12 xl:gap-20">
-        <div className="aspect-[3/4] rounded-2xl bg-[--color-cream] animate-pulse" />
+        <div className="aspect-[3/4] rounded-2xl bg-[#faf8f5] animate-pulse" />
         <div className="space-y-6">
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="h-6 rounded-lg bg-[--color-cream] animate-pulse"
+              className="h-6 rounded-lg bg-[#faf8f5] animate-pulse"
               style={{ width: `${70 - i * 10}%` }}
             />
           ))}
@@ -198,7 +210,7 @@ export default function ProductPage() {
   if (!product)
     return (
       <div className="text-center py-32 space-y-4">
-        <p className="font-display text-3xl text-[--color-crimson]/40">
+        <p className="font-display text-3xl text-[rgba(91,22,25,0.4)]">
           Product not found
         </p>
         <Link href="/shop" className="btn-primary inline-flex">
@@ -219,60 +231,46 @@ export default function ProductPage() {
       100,
   );
 
-  function addToBag() {
-    // Log activity
-    fetch("/api/users/activity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "add_to_cart", ref: product?.slug }),
-    }).catch(() => {});
+  function handleAddToBag() {
+    if (!size) return;
+
+    if (!isLoggedIn) {
+      setAuthOpen(true);
+      return;
+    }
+
+    addToCart({
+      productId: product!._id,
+      slug: product!.slug,
+      name: product!.name,
+      category:
+        typeof product!.category === "object"
+          ? (product!.category?.name ?? "")
+          : "",
+      color: color.name,
+      colorHex: color.hex,
+      size,
+      imageUrl: color.images?.[0] ?? "",
+      unitPrice: product!.discountedPrice,
+      quantity: qty,
+    });
+
     setAdded(true);
     setTimeout(() => setAdded(false), 2200);
   }
 
   return (
     <div className="w-full space-y-24">
-      {/* Breadcrumb */}
-      {/* <nav className="flex items-center gap-2 font-body text-[11px] tracking-[0.1em] uppercase text-[--color-slate]/35">
-        {[
-          ["Home", "/"],
-          ["Shop", "/shop"],
-          [
-            product.category?.name,
-            `/category/${product.category?.name?.toLowerCase().replace(/\s/g, "-")}`,
-          ],
-          [product.name, "#"],
-        ].map(([label, href], i, arr) => (
-          <span key={String(label)} className="flex items-center gap-2">
-            <Link
-              href={String(href)}
-              className={
-                i === arr.length - 1
-                  ? "text-[--color-crimson]/60"
-                  : "hover:text-[--color-slate]/60 transition-colors"
-              }
-            >
-              {label}
-            </Link>
-            {i < arr.length - 1 && (
-              <span className="text-[--color-slate]/15">/</span>
-            )}
-          </span>
-        ))}
-      </nav> */}
-
       {/* Main grid */}
       <div className="grid lg:grid-cols-2 gap-12 xl:gap-20 items-start">
-        {/* Gallery */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
-          <Gallery images={color.images.length ? color.images : [""]} />
+          <Gallery images={color.images?.length ? color.images : [""]} />
         </motion.div>
 
-        {/* Info */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -281,7 +279,11 @@ export default function ProductPage() {
         >
           {/* Category + badge */}
           <div className="flex items-center gap-3">
-            {/* <span className="section-label">{product.category?.name}</span> */}
+            <span className="section-label">
+              {typeof product.category === "object"
+                ? product.category?.name
+                : ""}
+            </span>
             {product.badge && (
               <span className="badge-gold">{product.badge}</span>
             )}
@@ -289,11 +291,11 @@ export default function ProductPage() {
 
           {/* Name */}
           <div className="space-y-2">
-            <h1 className="font-display text-4xl lg:text-5xl font-bold">
+            <h1 className="font-display text-4xl lg:text-5xl font-bold text-[#5b1619]">
               {product.name}
             </h1>
             {product.tagline && (
-              <p className="font-body text-sm text-[--color-slate]/50 italic">
+              <p className="font-body text-sm text-[rgba(66,83,98,0.5)] italic">
                 {product.tagline}
               </p>
             )}
@@ -308,31 +310,29 @@ export default function ProductPage() {
                   size={13}
                   className={
                     i < Math.round(product.rating)
-                      ? "fill-[--color-gold] text-[--color-gold]"
-                      : "text-[--color-slate]/15"
+                      ? "fill-[#f4d6a4] text-[#f4d6a4]"
+                      : "text-[rgba(66,83,98,0.15)]"
                   }
                 />
               ))}
             </div>
-            <span className="font-body text-sm font-semibold text-[--color-crimson]">
+            <span className="font-body text-sm font-semibold text-[#5b1619]">
               {product.rating}
             </span>
-            <span className="font-body text-xs text-[--color-slate]/35">
+            <span className="font-body text-xs text-[rgba(66,83,98,0.35)]">
               ({product.reviewCount} reviews)
             </span>
           </div>
 
           {/* Price */}
           <div className="flex items-baseline gap-4">
-            <span className="font-display text-4xl font-bold">
+            <span className="font-display text-4xl font-bold text-[#5b1619]">
               ${product.discountedPrice}
             </span>
-            <span className="font-body text-lg text-[--color-slate]/30 line-through">
+            <span className="font-body text-lg text-[rgba(66,83,98,0.3)] line-through">
               ${product.originalPrice}
             </span>
-            <span className="font-body text-[10px] font-bold tracking-[0.2em] uppercase badge-gold">
-              Save {discount}%
-            </span>
+            <span className="badge-gold">Save {discount}%</span>
           </div>
 
           <div className="divider-subtle" />
@@ -341,7 +341,7 @@ export default function ProductPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="label-form">Colour</span>
-              <span className="font-body text-sm text-[--color-crimson] font-medium">
+              <span className="font-body text-sm text-[#5b1619] font-medium">
                 {color.name}
               </span>
             </div>
@@ -356,8 +356,8 @@ export default function ProductPage() {
                   title={v.name}
                   className={`relative w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                     colorIdx === i
-                      ? "border-[--color-crimson] scale-110 shadow-md shadow-[--color-crimson]/20"
-                      : "border-transparent ring-1 ring-[--color-gold]/40 hover:ring-[--color-gold]"
+                      ? "border-[#5b1619] scale-110 shadow-md shadow-[rgba(91,22,25,0.2)]"
+                      : "border-transparent ring-1 ring-[rgba(244,214,164,0.5)] hover:ring-[rgba(244,214,164,1)]"
                   }`}
                   style={{ backgroundColor: v.hex }}
                 />
@@ -369,7 +369,7 @@ export default function ProductPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="label-form">Size</span>
-              <button className="font-body text-[11px] text-[--color-crimson]/50 underline underline-offset-2 hover:text-[--color-crimson] transition-colors">
+              <button className="font-body text-[11px] text-[rgba(91,22,25,0.5)] underline underline-offset-2 hover:text-[#5b1619] transition-colors">
                 Size Guide
               </button>
             </div>
@@ -380,8 +380,8 @@ export default function ProductPage() {
                   onClick={() => setSize(s)}
                   className={`w-12 h-10 rounded-lg font-body text-sm font-medium border-2 transition-all duration-200 ${
                     size === s
-                      ? "bg-[--color-crimson] text-white border-[--color-crimson]"
-                      : "bg-transparent text-[--color-slate]/60 border-[--color-gold]/40 hover:border-[--color-crimson]/40 hover:text-[--color-crimson]"
+                      ? "bg-[#5b1619] text-white border-[#5b1619]"
+                      : "bg-transparent text-[rgba(66,83,98,0.6)] border-[rgba(244,214,164,0.5)] hover:border-[rgba(91,22,25,0.4)] hover:text-[#5b1619]"
                   }`}
                 >
                   {s}
@@ -392,52 +392,52 @@ export default function ProductPage() {
 
           {/* Stock warning */}
           {color.stock > 0 && color.stock <= 5 && (
-            <p className="font-body text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
+            <p className="font-body text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
               Only {color.stock} left in this colour!
             </p>
           )}
 
           {/* Qty + CTA */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center border border-[--color-gold]/40 rounded-full overflow-hidden">
+            <div className="flex items-center border border-[rgba(244,214,164,0.5)] rounded-full overflow-hidden">
               <button
                 onClick={() => setQty(Math.max(1, qty - 1))}
-                className="w-10 h-11 flex items-center justify-center text-[--color-slate]/50 hover:text-[--color-crimson] transition-colors"
+                className="w-10 h-11 flex items-center justify-center text-[rgba(66,83,98,0.5)] hover:text-[#5b1619] transition-colors"
               >
                 <Minus size={13} />
               </button>
-              <span className="w-8 text-center font-body font-medium text-[--color-slate]/80 text-sm">
+              <span className="w-8 text-center font-body font-medium text-[rgba(66,83,98,0.8)] text-sm">
                 {qty}
               </span>
               <button
                 onClick={() => setQty(qty + 1)}
-                className="w-10 h-11 flex items-center justify-center text-[--color-slate]/50 hover:text-[--color-crimson] transition-colors"
+                className="w-10 h-11 flex items-center justify-center text-[rgba(66,83,98,0.5)] hover:text-[#5b1619] transition-colors"
               >
                 <Plus size={13} />
               </button>
             </div>
 
             <button
-              onClick={addToBag}
+              onClick={handleAddToBag}
               disabled={!size}
               className={`flex-1 h-11 rounded-full font-body font-semibold text-xs flex items-center justify-center gap-2 transition-all duration-300 ${
                 added
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-green-600 text-white"
                   : size
-                    ? "btn-primary"
-                    : "bg-[--color-cream] text-[--color-slate]/30 border border-[--color-gold]/25 cursor-default"
+                    ? "btn-primary h-11"
+                    : "bg-[#faf8f5] text-[rgba(66,83,98,0.3)] border border-[rgba(244,214,164,0.3)] cursor-default"
               }`}
             >
               <ShoppingBag size={14} />
-              {added ? "Added ✓" : size ? "Add to Bag" : "Select a Size"}
+              {added ? "Added to Bag ✓" : size ? "Add to Bag" : "Select a Size"}
             </button>
 
             <button
               onClick={() => setLoved(!loved)}
               className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                 loved
-                  ? "bg-[--color-crimson] border-[--color-crimson] text-white"
-                  : "border-[--color-gold]/40 text-[--color-slate]/40 hover:border-[--color-crimson]/40 hover:text-[--color-crimson]"
+                  ? "bg-[#5b1619] border-[#5b1619] text-white"
+                  : "border-[rgba(244,214,164,0.5)] text-[rgba(66,83,98,0.4)] hover:border-[rgba(91,22,25,0.4)] hover:text-[#5b1619]"
               }`}
             >
               <Heart size={14} fill={loved ? "currentColor" : "none"} />
@@ -455,11 +455,11 @@ export default function ProductPage() {
                 key={label}
                 className="flex flex-col items-center gap-1.5 p-3 surface-cream rounded-xl"
               >
-                <Icon size={14} className="text-[--color-crimson]" />
-                <span className="font-body text-[10px] font-semibold text-[--color-slate]/60 text-center leading-tight">
+                <Icon size={14} className="text-[#5b1619]" />
+                <span className="font-body text-[10px] font-semibold text-[rgba(66,83,98,0.6)] text-center leading-tight">
                   {label}
                 </span>
-                <span className="font-body text-[9px] text-[--color-slate]/35 text-center">
+                <span className="font-body text-[9px] text-[rgba(66,83,98,0.35)] text-center">
                   {sub}
                 </span>
               </div>
@@ -471,11 +471,9 @@ export default function ProductPage() {
             <Accordion title="Product Details">
               <p className="mb-3">{product.description}</p>
               <ul className="space-y-2">
-                {product.features.map((f) => (
+                {product.features?.map((f) => (
                   <li key={f} className="flex items-start gap-2">
-                    <span className="text-[--color-gold] mt-0.5 text-xs">
-                      ✦
-                    </span>
+                    <span className="text-[#f4d6a4] mt-0.5 text-xs">✦</span>
                     {f}
                   </li>
                 ))}
@@ -498,17 +496,27 @@ export default function ProductPage() {
         </motion.div>
       </div>
 
-      {/* Related products */}
+      {/* Related */}
       {related.length > 0 && (
-        <div className="border-t border-[--color-gold]/25 pt-20">
+        <div className="border-t border-[rgba(244,214,164,0.3)] pt-20">
           <ProductShelf
-            // key={Number(related.map((p) => p._id))}
             title="You May Also Love"
             label="Recommended"
             products={related}
           />
         </div>
       )}
+
+      {/* Auth dialog */}
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        defaultMode="login"
+        onSuccess={(u) => {
+          setIsLoggedIn(true);
+          setAuthOpen(false);
+        }}
+      />
     </div>
   );
 }

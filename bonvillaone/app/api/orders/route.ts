@@ -3,7 +3,12 @@
 // ══════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Order, Product } from "@/models/model";
+import { connectDB, Order, Product, User } from "@/models/model";
+import {
+  orderConfirmationCustomer,
+  orderConfirmationInternal,
+  sendMail,
+} from "@/lib/mail";
 
 export async function GET(req: NextRequest) {
   await connectDB();
@@ -31,20 +36,63 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   await connectDB();
   const body = await req.json();
-
-  // Generate order number
   const orderNumber = `BON-${Date.now().toString(36).toUpperCase()}`;
-
   const order = await Order.create({ ...body, orderNumber });
 
-  // Increment totalOrders on each product in the order
+  // Decrement stock + increment totalOrders per variant
   await Promise.all(
-    body.items.map((item: { product: string; quantity: number }) =>
-      Product.findByIdAndUpdate(item.product, {
-        $inc: { totalOrders: item.quantity },
-      }),
+    body.items.map(
+      async (item: { product: string; quantity: number; color: string }) => {
+        await Product.findOneAndUpdate(
+          { _id: item.product, "colorVariants.name": item.color },
+          {
+            $inc: {
+              totalOrders: item.quantity,
+              "colorVariants.$.stock": -item.quantity,
+            },
+          },
+        );
+      },
     ),
   );
+
+  // Fetch user email
+  const user = body.user
+    ? await User.findById(body.user).select("name email").lean()
+    : null;
+  const customerEmail = user?.email ?? body.guestEmail;
+  const customerName =
+    user?.name ?? body.shippingAddress?.fullName ?? "Customer";
+
+  const emailPayload = {
+    name: customerName,
+    orderNumber,
+    items: body.items,
+    subtotal: body.subtotal,
+    shipping: body.shipping,
+    total: body.total,
+    shippingAddress: body.shippingAddress,
+  };
+
+  // Send emails in parallel (don't block response)
+  if (customerEmail) {
+    sendMail(
+      customerEmail,
+      `Order Confirmed — ${orderNumber}`,
+      orderConfirmationCustomer(emailPayload),
+    ).catch(console.error);
+  }
+  sendMail(
+    process.env.COMPANY_EMAIL ?? process.env.NEXT_PUBLIC_SMTP_USERNAME!,
+    `New Order: ${orderNumber}`,
+    orderConfirmationInternal({
+      orderNumber,
+      customerName,
+      customerEmail: customerEmail ?? "guest",
+      total: body.total,
+      items: body.items,
+    }),
+  ).catch(console.error);
 
   return NextResponse.json(order, { status: 201 });
 }

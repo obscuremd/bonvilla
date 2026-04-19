@@ -45,9 +45,10 @@ async function getPage(slug: string): Promise<SitePage | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const page = await getPage(params.slug);
+  const { slug } = await params;
+  const page = await getPage(slug);
   return { title: page?.title ?? "Page" };
 }
 
@@ -272,9 +273,10 @@ function RenderBlock({ block }: { block: PageBlock }) {
 export default async function DynamicPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const page = await getPage(params.slug);
+  const { slug } = await params;
+  const page = await getPage(slug);
 
   if (!page || (!page.published && process.env.NODE_ENV === "production")) {
     notFound();

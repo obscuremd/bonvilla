@@ -6,7 +6,11 @@ interface ProductData {
   tagline: string;
   features: string[];
   sizes: string[];
-  category: string;
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
   originalPrice: number;
   discountedPrice: number;
   rating: number;

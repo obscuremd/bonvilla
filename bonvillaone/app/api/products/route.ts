@@ -11,9 +11,13 @@ export async function GET(req: NextRequest) {
   const page = Number(searchParams.get("page") ?? 1);
   const limit = Number(searchParams.get("limit") ?? 20);
   const sort = searchParams.get("sort") ?? "-createdAt";
+  const slug = searchParams.get("slug");
+  // cms=true means return all products regardless of isActive
+  const cmsMode = searchParams.get("cms") === "true";
 
-  const filter: Record<string, unknown> = { isActive: true };
+  const filter: Record<string, unknown> = cmsMode ? {} : { isActive: true };
   if (category) filter.category = category;
+  if (slug) filter.slug = slug;
 
   const [products, total] = await Promise.all([
     Product.find(filter)
@@ -31,15 +35,4 @@ export async function GET(req: NextRequest) {
     page,
     pages: Math.ceil(total / limit),
   });
-}
-
-export async function POST(req: NextRequest) {
-  await connectDB();
-  const body = await req.json();
-  const slug = body.name
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-  const product = await Product.create({ ...body, slug });
-  return NextResponse.json(product, { status: 201 });
 }

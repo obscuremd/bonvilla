@@ -1,10 +1,17 @@
-// ══════════════════════════════════════════════════════
-// SEED BUILT-IN PAGES (run once — e.g. in a seed script)
-// Ensures Home, Header, Footer built-in pages exist in DB.
-// ══════════════════════════════════════════════════════
+// app/api/seed/route.ts
+// Run once by visiting POST /api/seed (protect with SEED_SECRET in production)
+
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB, SitePage, NavLink } from "@/models/model";
 
-export async function seedBuiltinPages() {
+export async function POST(req: NextRequest) {
+  // Simple secret guard — add SEED_SECRET to your .env.local
+  const { searchParams } = new URL(req.url);
+  const secret = searchParams.get("secret");
+  if (secret !== process.env.SEED_SECRET) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   await connectDB();
 
   const builtins = [
@@ -103,7 +110,7 @@ export async function seedBuiltinPages() {
       slug: "header",
       title: "Header",
       kind: "builtin",
-      simpleBlocks: [], // header links come from NavLink collection
+      simpleBlocks: [],
       blocks: [],
       published: true,
     },
@@ -124,33 +131,47 @@ export async function seedBuiltinPages() {
     },
   ];
 
+  const results: string[] = [];
+
   for (const page of builtins) {
-    await SitePage.findOneAndUpdate(
-      { slug: page.slug },
-      { $setOnInsert: page },
-      { upsert: true },
-    );
+    const existing = await SitePage.findOne({ slug: page.slug });
+    if (existing) {
+      results.push(`Skipped "${page.slug}" (already exists)`);
+    } else {
+      await SitePage.create(page);
+      results.push(`Created "${page.slug}"`);
+    }
   }
 
-  // Seed default header nav links
-  const defaultHeaderLinks = [
+  // Default header nav links
+  const headerLinks = [
     {
       label: "Bestsellers",
       href: "/bestsellers",
       placement: "header",
       order: 1,
+      isActive: true,
     },
-    { label: "About", href: "/about", placement: "header", order: 2 },
+    {
+      label: "About",
+      href: "/about",
+      placement: "header",
+      order: 2,
+      isActive: true,
+    },
   ];
-  for (const link of defaultHeaderLinks) {
-    await NavLink.findOneAndUpdate(
-      { href: link.href, placement: link.placement },
-      { $setOnInsert: link },
-      { upsert: true },
-    );
+  for (const link of headerLinks) {
+    const exists = await NavLink.findOne({
+      href: link.href,
+      placement: link.placement,
+    });
+    if (!exists) {
+      await NavLink.create(link);
+      results.push(`Created nav link: ${link.label}`);
+    } else {
+      results.push(`Skipped nav link: ${link.label} (exists)`);
+    }
   }
 
-  console.log("Built-in pages seeded.");
+  return NextResponse.json({ success: true, results });
 }
-
-export {};
