@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/static-components */
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/static-components */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -121,7 +121,75 @@ const DEFAULT_VALUES: Record<BlockType, Record<string, unknown>> = {
   divider: {},
 };
 
-/* ── Block editor (same as before, condensed) ── */
+/* ══════════════════════════════════════════════
+   IMAGE UPLOAD BUTTON
+   Uses native id + htmlFor — NOT Button asChild.
+   The asChild/Slot pattern from shadcn intercepts
+   click events on nested <label> elements which
+   is why the file picker never opened.
+══════════════════════════════════════════════ */
+let _imgInputId = 0;
+
+function ImageUploadButton({
+  onFiles,
+  uploading,
+  multiple = true,
+  label = "Add Images",
+}: {
+  onFiles: (files: File[]) => void;
+  uploading: boolean;
+  multiple?: boolean;
+  label?: string;
+}) {
+  // Stable unique id so multiple instances on the page don't conflict
+  const [id] = useState(() => `img-upload-${++_imgInputId}`);
+
+  return (
+    <span className="inline-flex items-center">
+      {/* Hidden native input */}
+      <input
+        id={id}
+        type="file"
+        accept="image/*"
+        multiple={multiple}
+        disabled={uploading}
+        className="sr-only"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) {
+            onFiles(files);
+            e.target.value = "";
+          }
+        }}
+      />
+      {/* Label styled as a button — clicking label → opens file dialog */}
+      <label
+        htmlFor={id}
+        className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border cursor-pointer select-none transition-colors ${
+          uploading
+            ? "opacity-60 cursor-not-allowed border-border bg-muted text-muted-foreground"
+            : "border-border bg-background text-muted-foreground hover:border-[rgba(244,214,164,0.7)] hover:text-[#5b1619] hover:bg-[rgba(244,214,164,0.06)]"
+        }`}
+      >
+        {uploading ? (
+          <>
+            <Loader2 size={12} className="animate-spin" />
+            <span className="ml-1">Uploading…</span>
+          </>
+        ) : (
+          <>
+            <ImageIcon size={12} />
+            <span className="ml-1">{label}</span>
+          </>
+        )}
+      </label>
+    </span>
+  );
+}
+
+/* ══════════════════════════════════
+   BLOCK EDITOR
+══════════════════════════════════ */
 function BlockEditor({
   block,
   onChange,
@@ -134,12 +202,7 @@ function BlockEditor({
   const [uploading, setUploading] = useState(false);
   const v = block.value;
 
-  async function handleImages(
-    e: React.ChangeEvent<HTMLInputElement>,
-    field = "images",
-  ) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
+  async function handleFiles(files: File[], field = "images") {
     setUploading(true);
     try {
       const urls = await onUpload(files);
@@ -148,57 +211,37 @@ function BlockEditor({
       setUploading(false);
     }
   }
+
   function removeImage(field: string, idx: number) {
     const imgs = [...((v[field] as string[]) ?? [])];
     imgs.splice(idx, 1);
     onChange({ ...v, [field]: imgs });
   }
-  const imgPreview = (field: string) => (
+
+  const ImgSection = ({ field }: { field: string }) => (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 min-h-[4px]">
         {((v[field] as string[]) ?? []).map((url, i) => (
           <div
             key={i}
-            className="relative w-14 h-14 rounded-lg overflow-hidden border border-border"
+            className="relative w-14 h-14 rounded-lg overflow-hidden border border-border group flex-shrink-0"
           >
             <img src={url} alt="" className="w-full h-full object-cover" />
             <button
+              type="button"
               onClick={() => removeImage(field, i)}
-              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-destructive text-white flex items-center justify-center"
+              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-destructive text-white hidden group-hover:flex items-center justify-center"
             >
               <X size={9} />
             </button>
           </div>
         ))}
       </div>
-      <label className="cursor-pointer flex items-center gap-2">
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => handleImages(e, field)}
-          className="hidden"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={uploading}
-          className="text-xs"
-        >
-          {uploading ? (
-            <>
-              <Loader2 size={12} className="animate-spin mr-1" />
-              Uploading…
-            </>
-          ) : (
-            <>
-              <ImageIcon size={12} className="mr-1" />
-              Add Images
-            </>
-          )}
-        </Button>
-      </label>
+      <ImageUploadButton
+        uploading={uploading}
+        onFiles={(f) => handleFiles(f, field)}
+        label="Add Images"
+      />
     </div>
   );
 
@@ -231,16 +274,17 @@ function BlockEditor({
           />
         </div>
         <div>
-          <Label className="label-form">
+          <Label className="label-form mb-1">
             Images{" "}
             <span className="font-normal normal-case text-muted-foreground">
               (1 = static · 2+ = carousel)
             </span>
           </Label>
-          {imgPreview("images")}
+          <ImgSection field="images" />
         </div>
       </div>
     );
+
   if (block.type === "heading")
     return (
       <div>
@@ -275,6 +319,7 @@ function BlockEditor({
         />
       </div>
     );
+
   if (block.type === "image_grid")
     return (
       <div className="space-y-3">
@@ -295,11 +340,12 @@ function BlockEditor({
           />
         </div>
         <div>
-          <Label className="label-form">Images</Label>
-          {imgPreview("images")}
+          <Label className="label-form mb-1">Images</Label>
+          <ImgSection field="images" />
         </div>
       </div>
     );
+
   if (block.type === "features") {
     const items = (v.items as { title: string; sub: string }[]) ?? [
       { title: "", sub: "" },
@@ -338,10 +384,11 @@ function BlockEditor({
               </div>
               {items.length > 1 && (
                 <button
+                  type="button"
                   onClick={() =>
                     onChange({ ...v, items: items.filter((_, ii) => ii !== i) })
                   }
-                  className="mt-5 text-destructive"
+                  className="mt-5 text-destructive hover:text-destructive/70"
                 >
                   <X size={14} />
                 </button>
@@ -363,11 +410,12 @@ function BlockEditor({
       </div>
     );
   }
+
   if (block.type === "cta")
     return (
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="label-form">Label</Label>
+          <Label className="label-form">Button Label</Label>
           <Input
             className="input-field mt-1"
             value={(v.label as string) ?? ""}
@@ -375,7 +423,7 @@ function BlockEditor({
           />
         </div>
         <div>
-          <Label className="label-form">href</Label>
+          <Label className="label-form">Link (href)</Label>
           <Input
             className="input-field mt-1"
             value={(v.href as string) ?? ""}
@@ -384,6 +432,7 @@ function BlockEditor({
         </div>
       </div>
     );
+
   return (
     <p className="font-body text-xs text-muted-foreground italic">
       Divider — no settings needed.
@@ -391,7 +440,10 @@ function BlockEditor({
   );
 }
 
-/* ── Simple blocks (built-in) ── */
+/* ══════════════════════════════════
+   SIMPLE BLOCK FORM (built-in pages)
+   Same fix: uses ImageUploadButton
+══════════════════════════════════ */
 function SimpleBlockForm({
   blocks,
   onChange,
@@ -402,12 +454,8 @@ function SimpleBlockForm({
   onImageUpload: (f: File[]) => Promise<string[]>;
 }) {
   const [uploading, setUploading] = useState<string | null>(null);
-  async function handleImg(
-    key: string,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
+
+  async function handleImg(key: string, files: File[]) {
     setUploading(key);
     try {
       const urls = await onImageUpload(files);
@@ -420,6 +468,7 @@ function SimpleBlockForm({
       setUploading(null);
     }
   }
+
   return (
     <div className="space-y-4">
       {blocks.map((b) => (
@@ -447,26 +496,14 @@ function SimpleBlockForm({
                   className="h-20 rounded-lg border border-border object-cover"
                 />
               )}
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImg(b.key, e)}
-                  className="hidden"
+              <div className="flex items-center gap-2">
+                {/* ← ImageUploadButton instead of Button asChild label */}
+                <ImageUploadButton
+                  multiple={false}
+                  uploading={uploading === b.key}
+                  onFiles={(f) => handleImg(b.key, f)}
+                  label={b.value ? "Replace Image" : "Upload Image"}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={uploading === b.key}
-                >
-                  {uploading === b.key ? (
-                    <Loader2 size={12} className="animate-spin mr-1" />
-                  ) : (
-                    <ImageIcon size={12} className="mr-1" />
-                  )}
-                  {b.value ? "Replace" : "Upload"}
-                </Button>
                 {b.value && (
                   <Input
                     className="input-field text-xs flex-1"
@@ -481,7 +518,7 @@ function SimpleBlockForm({
                     placeholder="or paste URL"
                   />
                 )}
-              </label>
+              </div>
             </div>
           ) : (
             <Input
@@ -514,6 +551,7 @@ function NavLinkManager({
   const [newLabel, setNewLabel] = useState("");
   const [newHref, setNewHref] = useState("");
   const [saving, setSaving] = useState(false);
+
   async function load() {
     const r = await fetch(`/api/nav-links?placement=${placement}`);
     const d = await r.json();
@@ -522,6 +560,7 @@ function NavLinkManager({
   useEffect(() => {
     load();
   }, [placement]);
+
   async function add() {
     if (!newLabel || !newHref) return;
     setSaving(true);
@@ -545,6 +584,7 @@ function NavLinkManager({
     await fetch(`/api/nav-links/${id}`, { method: "DELETE" });
     await load();
   }
+
   return (
     <div className="space-y-4">
       <p className="label-form">{label}</p>
@@ -564,7 +604,7 @@ function NavLinkManager({
             </span>
             <button
               onClick={() => remove(l._id)}
-              className="text-muted-foreground/50 hover:text-destructive"
+              className="text-muted-foreground/50 hover:text-destructive transition-colors"
             >
               <Trash2 size={13} />
             </button>
@@ -606,10 +646,9 @@ function NavLinkManager({
   );
 }
 
-/* ═══════════════════════════════════════
-   PAGE EDITOR — fetches fresh on mount,
-   has SAVE + PUBLISH as separate actions
-═══════════════════════════════════════ */
+/* ══════════════════════════════════
+   PAGE EDITOR PANEL
+══════════════════════════════════ */
 function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
   const [page, setPage] = useState<SitePage | null>(null);
   const [simpleBlocks, setSimpleBlocks] = useState<SimpleBlock[]>([]);
@@ -668,7 +707,6 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
     });
   }
 
-  /* Save without publishing */
   async function saveAll() {
     if (!page) return;
     setSaving(true);
@@ -684,17 +722,16 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
     setSavedAt(new Date().toLocaleTimeString());
   }
 
-  /* Toggle published state */
   async function togglePublish() {
     if (!page) return;
     setPublishing(true);
-    const nextPublished = !page.published;
+    const next = !page.published;
     await fetch(`/api/site-pages/${page.slug}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ published: nextPublished }),
+      body: JSON.stringify({ published: next }),
     });
-    setPage((p) => (p ? { ...p, published: nextPublished } : null));
+    setPage((p) => (p ? { ...p, published: next } : null));
     setPublishing(false);
   }
 
@@ -713,20 +750,21 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
       </div>
     );
 
-  /* Header/Footer: special views */
   if (page.slug === "header")
     return (
       <div className="space-y-8 p-6">
         <div>
           <h3 className="font-display text-xl font-bold">Header Navigation</h3>
           <p className="font-body text-sm text-muted-foreground mt-1">
-            Manage static navigation links. Categories are pulled automatically.
+            Manage static nav links. Categories appear automatically from the
+            Categories section.
           </p>
         </div>
         <Separator />
         <NavLinkManager placement="header" label="Navigation Links" />
       </div>
     );
+
   if (page.slug === "footer")
     return (
       <div className="space-y-8 p-6 overflow-y-auto">
@@ -764,10 +802,10 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* ── Sticky header with SAVE + PUBLISH ── */}
+      {/* Sticky toolbar */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="min-w-0">
-          <h3 className="font-display text-base font-bold text-foreground truncate">
+          <h3 className="font-display text-base font-bold truncate">
             {page.title}
           </h3>
           <p className="font-body text-[11px] text-muted-foreground">
@@ -777,9 +815,7 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
             )}
           </p>
         </div>
-
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Preview link (custom pages only) */}
           {page.kind === "custom" && (
             <Button variant="outline" size="sm" asChild>
               <a
@@ -792,14 +828,12 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
               </a>
             </Button>
           )}
-
-          {/* SAVE (draft) */}
           <Button
             onClick={saveAll}
             disabled={saving}
             size="sm"
             variant="outline"
-            className="btn-outline text-xs px-3 py-1.5 h-auto"
+            className="btn-outline text-xs px-3 h-8"
           >
             {saving ? (
               <Loader2 size={12} className="animate-spin mr-1" />
@@ -808,17 +842,11 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
             )}
             Save Draft
           </Button>
-
-          {/* PUBLISH / UNPUBLISH — prominent, clearly labelled */}
           <Button
             onClick={togglePublish}
             disabled={publishing}
             size="sm"
-            className={`text-xs px-3 py-1.5 h-auto font-semibold gap-1.5 ${
-              page.published
-                ? "btn-outline border-amber-400/50 text-amber-700 hover:bg-amber-50"
-                : "btn-primary"
-            }`}
+            className={`text-xs px-3 h-8 gap-1.5 font-semibold ${page.published ? "btn-outline border-amber-300 text-amber-700 hover:bg-amber-50" : "btn-primary"}`}
           >
             {publishing ? (
               <Loader2 size={12} className="animate-spin" />
@@ -832,10 +860,10 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
         </div>
       </div>
 
-      {/* Published status banner */}
+      {/* Status banner */}
       {page.kind === "custom" && (
         <div
-          className={`px-6 py-2 text-xs font-body font-semibold flex items-center gap-2 ${page.published ? "bg-green-50 text-green-700 border-b border-green-100" : "bg-amber-50 text-amber-700 border-b border-amber-100"}`}
+          className={`px-6 py-1.5 text-xs font-body font-semibold flex items-center gap-2 flex-shrink-0 ${page.published ? "bg-green-50 text-green-700 border-b border-green-100" : "bg-amber-50 text-amber-700 border-b border-amber-100"}`}
         >
           <div
             className={`w-1.5 h-1.5 rounded-full ${page.published ? "bg-green-500" : "bg-amber-400"}`}
@@ -847,7 +875,6 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
       )}
 
       <div className="p-6 space-y-6 overflow-y-auto flex-1">
-        {/* Simple content (home fields etc.) */}
         {simpleBlocks.length > 0 && (
           <div className="surface rounded-2xl p-5 space-y-5">
             <p className="font-body text-sm font-semibold">Page Content</p>
@@ -859,7 +886,6 @@ function PageEditorPanel({ pageSlug }: { pageSlug: string }) {
           </div>
         )}
 
-        {/* Rich blocks */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="font-body text-sm font-semibold">
@@ -975,15 +1001,14 @@ function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
   const [slug, setSlug] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  function deriveSlug(t: string) {
-    return t
+  const d = (t: string) =>
+    t
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
-  }
   async function create() {
     if (!title.trim() || !slug.trim()) {
-      setError("Title and slug are required.");
+      setError("Title and slug required.");
       return;
     }
     setSaving(true);
@@ -1001,8 +1026,8 @@ function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
       }),
     });
     if (!r.ok) {
-      const d = await r.json();
-      setError(d.error ?? "Failed.");
+      const dd = await r.json();
+      setError(dd.error ?? "Failed.");
       setSaving(false);
       return;
     }
@@ -1039,7 +1064,7 @@ function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                setSlug(deriveSlug(e.target.value));
+                setSlug(d(e.target.value));
               }}
             />
           </div>
@@ -1052,7 +1077,7 @@ function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
               <Input
                 className="input-field flex-1"
                 value={slug}
-                onChange={(e) => setSlug(deriveSlug(e.target.value))}
+                onChange={(e) => setSlug(d(e.target.value))}
               />
             </div>
           </div>
@@ -1072,7 +1097,7 @@ function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
             {saving ? (
               <Loader2 size={12} className="animate-spin mr-1" />
             ) : null}
-            Create Page
+            Create
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1080,14 +1105,13 @@ function NewPageDialog({ onCreated }: { onCreated: (p: SitePage) => void }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════
    MAIN EXPORT
-═══════════════════════════════════════ */
+══════════════════════════════════ */
 export default function CMSContent() {
   const [pages, setPages] = useState<SitePage[]>([]);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [toggling, setToggling] = useState<string | null>(null);
 
   async function loadPages() {
     const r = await fetch("/api/site-pages");
@@ -1099,13 +1123,6 @@ export default function CMSContent() {
   useEffect(() => {
     loadPages();
   }, []);
-
-  /* Keep sidebar badges in sync after publish toggle */
-  function refreshPageInList(slug: string, published: boolean) {
-    setPages((prev) =>
-      prev.map((p) => (p.slug === slug ? { ...p, published } : p)),
-    );
-  }
 
   async function deletePage(page: SitePage) {
     await fetch(`/api/site-pages/${page.slug}`, { method: "DELETE" });
@@ -1120,11 +1137,14 @@ export default function CMSContent() {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border">
         <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-semibold">
-          Built-in Pages
+          Pages
         </p>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-0.5">
+          <p className="font-body text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60 px-2 pt-1 pb-2">
+            Built-in
+          </p>
           {builtins.map((page) => (
             <button
               key={page.slug}
@@ -1140,8 +1160,8 @@ export default function CMSContent() {
           {customs.length > 0 && (
             <>
               <Separator className="my-3" />
-              <p className="font-body text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-semibold px-2 pb-1">
-                Custom Pages
+              <p className="font-body text-[9px] tracking-[0.3em] uppercase text-muted-foreground/60 px-2 pb-2">
+                Custom
               </p>
               {customs.map((page) => (
                 <div key={page.slug} className="group relative">
@@ -1153,12 +1173,12 @@ export default function CMSContent() {
                     <span className="flex-1 truncate">{page.title}</span>
                     <Badge
                       variant="outline"
-                      className={`text-[9px] font-bold tracking-wide h-4 px-1.5 ${page.published ? "border-green-300 text-green-700 bg-green-50" : "border-amber-300 text-amber-700 bg-amber-50"}`}
+                      className={`text-[9px] font-bold h-4 px-1.5 ${page.published ? "border-green-300 text-green-700 bg-green-50" : "border-amber-300 text-amber-700 bg-amber-50"}`}
                     >
                       {page.published ? "Live" : "Draft"}
                     </Badge>
                   </button>
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center">
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex">
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <button className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive">

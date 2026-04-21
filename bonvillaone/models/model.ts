@@ -202,7 +202,7 @@ export interface IActivity {
 export interface IUser extends Document {
   email: string;
   name: string;
-  role: "customer" | "admin";
+  role: "customer" | "admin" | "super_admin";
   passwordHash?: string;
   provider?: string;
   wishlist: Types.ObjectId[];
@@ -231,7 +231,11 @@ const UserSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true },
     name: { type: String, required: true, trim: true },
-    role: { type: String, enum: ["customer", "admin"], default: "customer" },
+    role: {
+      type: String,
+      enum: ["customer", "admin", "super_admin"],
+      default: "customer",
+    },
     passwordHash: { type: String, select: false },
     provider: String,
     wishlist: [{ type: Schema.Types.ObjectId, ref: "Product" }],

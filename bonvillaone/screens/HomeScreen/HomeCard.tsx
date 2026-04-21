@@ -14,7 +14,6 @@ interface Category {
   imageUrl?: string;
 }
 
-/* ── fallback images when category has no imageUrl ── */
 const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&auto=format&fit=crop&q=70",
   "https://images.unsplash.com/photo-1594381898411-846e7d193883?w=400&auto=format&fit=crop&q=70",
@@ -24,12 +23,11 @@ const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1607962837359-5e7e89f86776?w=400&auto=format&fit=crop&q=70",
 ];
 
-/* ═══════════════════════════════════
-   CATEGORY STRIP — live data
-═══════════════════════════════════ */
+/* ══════════════════════════════
+   CATEGORY STRIP
+══════════════════════════════ */
 export function CategoryStrip({ categories = [] }: { categories: Category[] }) {
   const display = categories.slice(0, 6);
-
   return (
     <section className="w-full space-y-6">
       <div className="flex items-end justify-between">
@@ -45,12 +43,10 @@ export function CategoryStrip({ categories = [] }: { categories: Category[] }) {
           </button>
         </Link>
       </div>
-
       <div className="divider-gold" />
-
       {display.length === 0 ? (
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-          {FALLBACK_IMAGES.map((img, i) => (
+          {FALLBACK_IMAGES.map((_, i) => (
             <div
               key={i}
               className="aspect-square rounded-2xl bg-[#faf8f5] animate-pulse"
@@ -98,33 +94,72 @@ export function CategoryStrip({ categories = [] }: { categories: Category[] }) {
   );
 }
 
-/* ═══════════════════════════════════
+/* ══════════════════════════════
    BRAND PILLARS
-═══════════════════════════════════ */
-const pillars = [
+   Now accepts optional CMS props.
+   Falls back to hardcoded defaults if props are empty strings.
+══════════════════════════════ */
+interface BrandPillarsProps {
+  pillar1Title?: string;
+  pillar1Body?: string;
+  pillar2Title?: string;
+  pillar2Body?: string;
+  pillar3Title?: string;
+  pillar3Body?: string;
+  pillar4Title?: string;
+  pillar4Body?: string;
+}
+
+const PILLAR_ICONS = [Zap, Repeat2, Leaf, Star];
+const PILLAR_DEFAULTS = [
   {
-    icon: Zap,
     title: "Performance Fabric",
     body: "4-way stretch knit engineered to move with your body, not against it.",
   },
   {
-    icon: Repeat2,
     title: "Shape Retention",
     body: "Washes 200+ times without losing compression or colour intensity.",
   },
   {
-    icon: Leaf,
     title: "Sustainably Made",
     body: "Crafted from recycled fibres with a commitment to ethical production.",
   },
   {
-    icon: Star,
     title: "Loved by Thousands",
     body: "98% of customers say they'd buy again — and bring a friend.",
   },
 ];
 
-export function BrandPillars() {
+export function BrandPillars({
+  pillar1Title,
+  pillar1Body,
+  pillar2Title,
+  pillar2Body,
+  pillar3Title,
+  pillar3Body,
+  pillar4Title,
+  pillar4Body,
+}: BrandPillarsProps = {}) {
+  // Merge CMS values over defaults (only override if non-empty)
+  const pillars = [
+    {
+      title: pillar1Title || PILLAR_DEFAULTS[0].title,
+      body: pillar1Body || PILLAR_DEFAULTS[0].body,
+    },
+    {
+      title: pillar2Title || PILLAR_DEFAULTS[1].title,
+      body: pillar2Body || PILLAR_DEFAULTS[1].body,
+    },
+    {
+      title: pillar3Title || PILLAR_DEFAULTS[2].title,
+      body: pillar3Body || PILLAR_DEFAULTS[2].body,
+    },
+    {
+      title: pillar4Title || PILLAR_DEFAULTS[3].title,
+      body: pillar4Body || PILLAR_DEFAULTS[3].body,
+    },
+  ];
+
   return (
     <section className="w-full">
       <div className="bg-[#faf8f5] rounded-3xl px-8 md:px-16 py-12 md:py-16 space-y-10">
@@ -140,39 +175,42 @@ export function BrandPillars() {
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {pillars.map(({ icon: Icon, title, body }, i) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{
-                duration: 0.55,
-                delay: i * 0.1,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="flex flex-col items-center text-center gap-3 p-5 bg-white rounded-2xl border border-[rgba(244,214,164,0.3)] shadow-sm card-lift"
-            >
-              <div className="w-10 h-10 rounded-full bg-[rgba(91,22,25,0.08)] flex items-center justify-center">
-                <Icon size={18} className="text-[#5b1619]" />
-              </div>
-              <p className="font-body text-sm font-bold text-[#5b1619]">
-                {title}
-              </p>
-              <p className="font-body text-[12px] text-[rgba(66,83,98,0.6)] leading-relaxed">
-                {body}
-              </p>
-            </motion.div>
-          ))}
+          {pillars.map(({ title, body }, i) => {
+            const Icon = PILLAR_ICONS[i];
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{
+                  duration: 0.55,
+                  delay: i * 0.1,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="flex flex-col items-center text-center gap-3 p-5 bg-white rounded-2xl border border-[rgba(244,214,164,0.3)] shadow-sm card-lift"
+              >
+                <div className="w-10 h-10 rounded-full bg-[rgba(91,22,25,0.08)] flex items-center justify-center">
+                  <Icon size={18} className="text-[#5b1619]" />
+                </div>
+                <p className="font-body text-sm font-bold text-[#5b1619]">
+                  {title}
+                </p>
+                <p className="font-body text-[12px] text-[rgba(66,83,98,0.6)] leading-relaxed">
+                  {body}
+                </p>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
 
-/* ═══════════════════════════════════
+/* ══════════════════════════════
    EDITORIAL FEATURE
-═══════════════════════════════════ */
+══════════════════════════════ */
 export function EditorialFeature() {
   return (
     <section className="w-full grid md:grid-cols-2 gap-6 md:gap-10 items-stretch">
@@ -222,7 +260,7 @@ export function EditorialFeature() {
               shows up fully.
             </p>
           </div>
-          <Link href="/collections" className="inline-flex mt-6">
+          <Link href="/shop" className="inline-flex mt-6">
             <button className="btn-gold gap-2 text-sm group">
               Explore Collection
               <ArrowRight
@@ -232,7 +270,6 @@ export function EditorialFeature() {
             </button>
           </Link>
         </div>
-
         <div className="relative h-[200px] md:h-[220px] rounded-3xl overflow-hidden shadow-lg ring-1 ring-[rgba(244,214,164,0.15)] group">
           <Image
             src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=700&auto=format&fit=crop&q=80"
@@ -255,9 +292,9 @@ export function EditorialFeature() {
   );
 }
 
-/* ═══════════════════════════════════
+/* ══════════════════════════════
    REVIEWS STRIP
-═══════════════════════════════════ */
+══════════════════════════════ */
 const reviews = [
   {
     name: "Amara O.",
@@ -343,10 +380,19 @@ export function ReviewsStrip() {
   );
 }
 
-/* ═══════════════════════════════════
+/* ══════════════════════════════
    NEWSLETTER CTA
-═══════════════════════════════════ */
-export function NewsletterCTA() {
+   Now accepts optional CMS props with defaults.
+══════════════════════════════ */
+interface NewsletterCTAProps {
+  headline?: string;
+  body?: string;
+}
+
+export function NewsletterCTA({
+  headline = "10% off your first order.",
+  body = "Sign up and be the first to hear about new drops, exclusive offers, and training inspo.",
+}: NewsletterCTAProps = {}) {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
 
@@ -359,13 +405,17 @@ export function NewsletterCTA() {
           <span className="font-body text-[10px] tracking-[0.4em] uppercase text-[rgba(244,214,164,0.6)] font-semibold">
             Join the Movement
           </span>
+
+          {/* ← CMS-driven headline */}
           <h2 className="font-display text-4xl md:text-6xl font-bold text-white leading-tight">
-            10% off your <br /> first order.
+            {headline}
           </h2>
+
+          {/* ← CMS-driven body */}
           <p className="font-body text-sm text-[rgba(255,255,255,0.6)] leading-relaxed">
-            Sign up and be the first to hear about new drops, exclusive offers,
-            and training inspo.
+            {body}
           </p>
+
           {done ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
