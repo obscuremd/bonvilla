@@ -45,7 +45,10 @@ async function getHomePage() {
       next: { revalidate: 60 }, // short cache so CMS edits appear quickly
     });
     if (!r.ok) return null;
-    return await r.json();
+    const result = await r.json();
+    console.log("homepage response: ", result);
+    return result;
+    // return await r.json();
   } catch {
     return null;
   }
